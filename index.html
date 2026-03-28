@@ -3,1650 +3,381 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lions Club of Chennai Super Kings</title>
+<title>LC Chennai Super Kings — Club Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<style>
-:root{
-  --gold:#C9A84C;--gold-light:#F0D98A;--gold-pale:#FDF8EC;
-  --navy:#0B1A3B;--navy-mid:#1A2F5A;--navy-light:#2C4580;
-  --teal:#0D7C6B;--teal-light:#E0F2EE;
-  --red:#B83A2A;--red-light:#FDECEA;
-  --amber:#9C6A0A;--amber-light:#FEF3DC;
-  --purple:#5A3A8A;--purple-light:#F0EAFA;
-  --green:#2A6B3A;--green-light:#E8F5EC;
-  --bg:#F7F5F0;--surface:#fff;
-  --border:rgba(11,26,59,0.1);--text:#0B1A3B;--text-muted:#6B7499;
-  --radius:12px;--radius-sm:8px;
-  --done-bg:#E8F5EC;
-  --warn-amber:#FEF3DC;--warn-red:#FDECEA;
-}
-[data-theme="dark"]{
-  --bg:#0F1623;--surface:#1A2235;--border:rgba(255,255,255,0.08);
-  --text:#E8EAF0;--text-muted:#8B92A8;--gold-pale:#1E1A0F;
-  --done-bg:#0F2A1A;--warn-amber:#1E1500;--warn-red:#1E0A0A;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;transition:background .3s,color .3s}
-h1,h2,h3{font-family:'Playfair Display',serif}
-button,input,select,textarea{font-family:'DM Sans',sans-serif}
-
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(11,26,59,0.75);display:flex;align-items:center;justify-content:center;z-index:2000;backdrop-filter:blur(6px)}
-.modal-overlay.hidden{display:none}
-.modal-box{background:var(--surface);border-radius:16px;padding:32px 28px;max-width:420px;width:92%;box-shadow:0 24px 64px rgba(0,0,0,0.25)}
-.modal-box h2{font-size:22px;color:var(--navy);margin-bottom:6px;text-align:center}
-.modal-box p{font-size:13px;color:var(--text-muted);margin-bottom:22px;text-align:center;line-height:1.6}
-.prefix-row{display:flex;gap:8px;margin-bottom:10px}
-.prefix-btn{flex:1;padding:9px 0;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
-.prefix-btn.active{border-color:var(--gold);background:var(--gold-pale);color:var(--navy);font-weight:600}
-.modal-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:11px 14px;font-size:15px;outline:none;margin-bottom:14px;background:var(--bg);color:var(--text);transition:border .2s}
-.modal-input:focus{border-color:var(--gold)}
-.modal-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s}
-.modal-btn:hover{background:var(--navy-mid)}
-.modal-error{color:var(--red);font-size:12px;margin-bottom:10px;text-align:center;min-height:18px}
-
-/* ── TOAST ── */
-.toast-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
-.toast{background:var(--navy);color:#fff;font-size:13px;padding:10px 18px;border-radius:24px;box-shadow:0 4px 20px rgba(0,0,0,0.2);display:flex;align-items:center;gap:10px;pointer-events:all;animation:toastIn .25s ease;max-width:320px}
-.toast.success{background:var(--teal)}
-.toast.error{background:var(--red)}
-.toast.warning{background:var(--amber)}
-.toast-undo{background:none;border:1px solid rgba(255,255,255,0.4);color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;cursor:pointer;margin-left:4px}
-@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-/* ── COUNTDOWN BANNER ── */
-.countdown-banner{background:var(--navy);color:#fff;padding:10px 20px;text-align:center;font-size:13px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;position:relative}
-.countdown-banner.hidden{display:none}
-.countdown-num{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:700;line-height:1}
-.countdown-label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.06em}
-.countdown-box{text-align:center}
-.countdown-sep{color:rgba(255,255,255,0.3);font-size:20px}
-.set-date-btn{background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold-light);font-size:11px;padding:4px 12px;border-radius:12px;cursor:pointer;margin-left:8px}
-
-/* ── PRESENCE ── */
-.presence-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)}
-.presence-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,0.25)}
-.presence-name{background:var(--bg);padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:5px}
-
-/* ── HERO ── */
-.hero{background:var(--navy);padding:32px 20px 28px;text-align:center;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(201,168,76,0.04) 40px,rgba(201,168,76,0.04) 80px)}
-.hero-actions{position:absolute;top:14px;right:14px;display:flex;gap:8px}
-.hero-icon-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.7);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s}
-.hero-icon-btn:hover{background:rgba(255,255,255,0.15)}
-.hero-badge{display:inline-block;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:3px 12px;border-radius:20px;margin-bottom:10px}
-.hero h1{color:#fff;font-size:clamp(18px,3.5vw,32px);font-weight:700;line-height:1.25}
-.hero h1 span{color:var(--gold)}
-.hero-sub{color:rgba(255,255,255,0.45);font-size:12px;margin-top:5px}
-.hero-meta{display:flex;justify-content:center;gap:16px;margin-top:18px;flex-wrap:wrap}
-.hero-meta-item .val{color:var(--gold);font-size:19px;font-weight:700;font-family:'Playfair Display',serif}
-.hero-meta-item .lbl{color:rgba(255,255,255,0.4);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-.user-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);font-size:12px;padding:4px 12px;border-radius:20px;margin-top:12px;cursor:pointer}
-
-/* ── TABS ── */
-.main-tabs,.install-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;box-shadow:0 2px 10px rgba(0,0,0,0.06)}
-.main-tabs{position:sticky;top:0;z-index:120}
-.install-tabs{position:sticky;top:46px;z-index:110;display:none}
-.install-tabs.visible{display:flex}
-.tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;flex-shrink:0}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--navy);border-bottom-color:var(--gold)}
-[data-theme="dark"] .tab.active{color:var(--gold)}
-
-/* ── PAGES / CARDS ── */
-.home-grid,.detail-grid,.officer-list,.event-grid,.online-list{display:grid;gap:10px}
-.home-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:14px}
-.detail-grid{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:12px}
-.officer-list{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:12px}
-.event-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:12px}
-.info-card,.detail-card,.officer-card,.event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
-.info-card h3,.detail-card h3,.officer-card h3,.event-card h3{font-size:16px;color:var(--navy);margin-bottom:8px}
-.info-card p,.detail-card p,.officer-card p,.event-card p,.info-card li,.detail-card li,.officer-card li,.event-card li{font-size:13px;color:var(--text-muted);line-height:1.6}
-.detail-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 12px}
-.detail-item .k{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px}
-.detail-item .v{font-size:13px;font-weight:600;color:var(--text)}
-.chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip-item{background:var(--gold-pale);color:var(--amber);padding:4px 9px;border-radius:999px;font-size:11px;font-weight:500}
-.event-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.quick-btn{border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;background:var(--navy);color:#fff;transition:background .2s}
-.quick-btn.alt{background:var(--teal)}
-.quick-btn.ghost{background:var(--bg);color:var(--text);border:1px solid var(--border)}
-.quick-btn:hover{filter:brightness(1.05)}
-.install-hint{background:var(--gold-pale);border:1px solid rgba(201,168,76,0.25);border-radius:var(--radius);padding:12px 14px;color:var(--amber);font-size:13px;margin-bottom:14px}
-
-/* ── ONLINE OVERLAY ── */
-.overlay{position:fixed;inset:0;background:rgba(11,26,59,0.72);display:none;align-items:center;justify-content:center;z-index:2500;backdrop-filter:blur(5px);padding:16px}
-.overlay.visible{display:flex}
-.overlay-card{background:var(--surface);border-radius:16px;width:min(92vw,420px);box-shadow:0 24px 64px rgba(0,0,0,0.25);padding:16px}
-.overlay-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
-.overlay-head h3{font-size:18px;color:var(--navy)}
-.overlay-close{border:none;background:var(--bg);color:var(--text);width:30px;height:30px;border-radius:8px;cursor:pointer;flex-shrink:0}
-.online-list{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}
-.online-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);padding:10px 12px;border-radius:10px}
-.online-item .name{font-size:13px;font-weight:600;color:var(--text)}
-.online-item .meta{font-size:11px;color:var(--text-muted)}
-.online-empty{padding:16px;text-align:center;color:var(--text-muted);font-size:13px}
-
-/* ── LAYOUT ── */
-.page{display:none}
-.page.active{display:block}
-.container{max-width:900px;margin:0 auto;padding:24px 14px}
-.section-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
-.section-sub{font-size:13px;color:var(--text-muted);margin-bottom:18px}
-
-/* ── DASHBOARD CARDS ── */
-.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
-.dash-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
-.dash-card .num{font-size:26px;font-weight:700;font-family:'Playfair Display',serif}
-.dash-card .lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
-.dash-bar{height:5px;background:var(--border);border-radius:3px;margin-top:10px;overflow:hidden}
-.dash-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:3px;transition:width .5s}
-
-/* ── FILTER BAR ── */
-.filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
-.filter-btn{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;transition:all .2s}
-.filter-btn:hover{border-color:var(--navy);color:var(--text)}
-.filter-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-[data-theme="dark"] .filter-btn.active{background:var(--gold);color:var(--navy)}
-.sort-select{padding:5px 10px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;cursor:pointer;margin-left:auto}
-
-/* ── PHASES ── */
-.phase{margin-bottom:18px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-.phase-header{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none}
-.phase-header h3{font-size:13px;font-weight:600;flex:1}
-.phase-count{font-size:11px;opacity:.65;background:rgba(0,0,0,0.07);padding:2px 8px;border-radius:10px}
-.phase-pct{font-size:11px;font-weight:600;color:var(--teal)}
-.phase-actions{display:flex;gap:6px}
-.ph-icon-btn{background:rgba(0,0,0,0.06);border:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--text-muted);flex-shrink:0}
-.ph-icon-btn:hover{background:rgba(0,0,0,0.12)}
-.toggle-icon{font-size:12px;transition:transform .2s;color:var(--text-muted)}
-.phase-header.open .toggle-icon{transform:rotate(180deg)}
-.phase-body{background:var(--surface);border-top:1px solid var(--border)}
-.phase-body.collapsed{display:none}
-.ph-0{background:#E8F0FF} .ph-0 h3{color:#1A2F5A}
-.ph-1{background:#FEF3DC} .ph-1 h3{color:#9C6A0A}
-.ph-2{background:#E0F2EE} .ph-2 h3{color:#0D7C6B}
-.ph-3{background:#F0EAFA} .ph-3 h3{color:#5A3A8A}
-.ph-4{background:#FDECEA} .ph-4 h3{color:#B83A2A}
-.ph-5{background:#E8F5EC} .ph-5 h3{color:#2A6B3A}
-
-/* ── TASKS ── */
-.task{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(11,26,59,0.06);transition:background .15s;background:var(--surface)}
-.task:last-child{border-bottom:none}
-.task.done{background:var(--done-bg)}
-.task.warn-amber{background:var(--warn-amber)}
-.task.warn-red{background:var(--warn-red)}
-.task.done .task-title{text-decoration:line-through;color:var(--text-muted)}
-.checkbox{width:18px;height:18px;border-radius:4px;border:1.5px solid #C5C9D8;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px;cursor:pointer;transition:all .15s;background:var(--surface)}
-.checkbox.checked{background:var(--teal);border-color:var(--teal)}
-.checkbox.checked::after{content:'';display:block;width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
-.task-title{font-size:13px;font-weight:500;line-height:1.4}
-.task-desc{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.4}
-.task-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;align-items:center}
-.task-who{font-size:11px;color:var(--navy-light);background:rgba(44,69,128,0.08);padding:2px 7px;border-radius:8px}
-.task-done-by{font-size:11px;color:var(--teal)}
-.task-deadline{font-size:11px;padding:2px 7px;border-radius:8px;font-weight:500}
-.dl-ok{background:var(--teal-light);color:var(--teal)}
-.dl-warn{background:var(--amber-light);color:var(--amber)}
-.dl-over{background:var(--red-light);color:var(--red)}
-.task-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.priority{font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;white-space:nowrap}
-.p-urgent{background:var(--red-light);color:var(--red)}
-.p-high{background:var(--amber-light);color:var(--amber)}
-.p-med{background:var(--teal-light);color:var(--teal)}
-.p-low{background:var(--purple-light);color:var(--purple)}
-.task-move-btns{display:flex;gap:3px}
-.move-btn{background:var(--bg);border:1px solid var(--border);border-radius:5px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:var(--text-muted);transition:all .15s}
-.move-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-.task-edit-row{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
-.task-edit-row input,.task-edit-row select,.task-edit-row textarea{border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;background:var(--bg);color:var(--text);outline:none}
-.task-edit-row input:focus,.task-edit-row select:focus,.task-edit-row textarea:focus{border-color:var(--gold)}
-.task-edit-row .save-btn{background:var(--teal);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer}
-.task-edit-row .del-btn{background:var(--red-light);color:var(--red);border:1px solid var(--red-light);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
-.phase-move-select{font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 6px;background:var(--bg);color:var(--text);outline:none;max-width:130px}
-.add-task-row{padding:10px 12px;border-top:1px dashed var(--border)}
-.add-task-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
-.add-task-input:focus{border-color:var(--gold)}
-
-/* ── AGENDA ── */
-.agenda-list{}
-.agenda-item{display:grid;grid-template-columns:42px 1fr auto;gap:10px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-top:none;transition:background .15s}
-.agenda-item:first-child{border-top:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0}
-.agenda-item:last-child{border-radius:0 0 var(--radius) var(--radius)}
-.agenda-item.done{background:var(--done-bg)}
-.agenda-item.done .agenda-title{text-decoration:line-through;color:var(--text-muted)}
-.agenda-num{width:32px;height:32px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.agenda-num.done-num{background:var(--teal);color:#fff}
-.agenda-title{font-size:13px;font-weight:600;line-height:1.4}
-.agenda-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
-.agenda-done-by{font-size:11px;color:var(--teal);margin-top:2px}
-.time-badge{background:var(--amber-light);color:var(--amber);font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;white-space:nowrap}
-.agenda-type{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-top:3px;display:inline-block}
-.at-protocol{background:#E8F0FF;color:#1A2F5A}
-.at-ceremony{background:var(--amber-light);color:var(--amber)}
-.at-speech{background:var(--purple-light);color:var(--purple)}
-.at-service{background:var(--teal-light);color:var(--teal)}
-.at-felicitation{background:#F5E6FF;color:#6A3A9A}
-.agenda-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
-.agenda-move-btns{display:flex;gap:3px}
-.agenda-edit-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
-.agenda-edit-row input,.agenda-edit-row select{border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;background:var(--bg);color:var(--text);outline:none}
-.agenda-edit-row input:focus{border-color:var(--gold)}
-.agenda-duration-total{background:var(--navy);border-radius:var(--radius);padding:12px 16px;margin-top:12px;color:#fff;font-size:13px}
-
-/* ── CHAIRPERSONS ── */
-.chair-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.chair-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.chair-card-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
-.chair-icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.chair-name{font-size:14px;font-weight:600;line-height:1.3;color:var(--text)}
-.chair-lci{font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
-.chair-body{padding:10px 14px}
-.chair-projects{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.chip{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;cursor:default}
-.chip-del{cursor:pointer;opacity:.6;margin-left:3px}
-.chip-del:hover{opacity:1}
-.chip-add-input{font-size:11px;padding:2px 8px;border-radius:20px;border:1px dashed var(--border);background:var(--bg);color:var(--text);outline:none;width:100px}
-.chair-duties{font-size:12px;color:var(--text-muted);line-height:1.5}
-.chair-assign{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-.assign-label{font-size:12px;color:var(--text-muted);flex-shrink:0}
-.assign-input{flex:1;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--bg);color:var(--text);outline:none}
-.assign-input:focus{border-color:var(--gold)}
-.assigned-by{font-size:11px;color:var(--teal);margin-top:4px}
-.chair-edit-area{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px}
-.chair-edit-area textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--bg);color:var(--text);outline:none;resize:vertical;min-height:60px}
-.chair-edit-area input{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;background:var(--bg);color:var(--text);outline:none}
-.chair-edit-area input:focus,.chair-edit-area textarea:focus{border-color:var(--gold)}
-.add-chair-btn{border:1.5px dashed var(--border);border-radius:var(--radius);padding:14px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer;transition:all .2s;background:var(--surface)}
-.add-chair-btn:hover{border-color:var(--gold);color:var(--gold)}
-
-/* ── BUDGET ── */
-.budget-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
-.bsum{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px}
-.bsum .val{font-size:20px;font-weight:700;font-family:'Playfair Display',serif}
-.bsum .lbl{font-size:11px;color:var(--text-muted);margin-top:2px}
-.budget-sort{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
-.budget-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
-.bthead{display:grid;grid-template-columns:2fr 1fr 1fr 90px 28px;gap:6px;padding:9px 12px;background:var(--navy);color:rgba(255,255,255,0.75);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.btrow{display:grid;grid-template-columns:2fr 1fr 1fr 90px 28px;gap:6px;padding:9px 12px;border-bottom:1px solid var(--border);align-items:start;font-size:13px;background:var(--surface)}
-.btrow:last-child{border-bottom:none}
-.btrow:hover{background:var(--bg)}
-.btrow input,.btrow select{border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:12px;background:var(--bg);color:var(--text);outline:none;width:100%}
-.btrow input:focus,.btrow select:focus{border-color:var(--gold)}
-.btcat{font-size:10px;font-weight:600;text-transform:uppercase;padding:2px 5px;border-radius:5px;display:inline-block;margin-top:2px;background:var(--amber-light);color:var(--amber)}
-.updated-by{font-size:10px;color:var(--text-muted);margin-top:2px}
-.note-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:2px;line-height:1;color:var(--text-muted)}
-.note-btn:hover{color:var(--amber)}
-.note-field{margin-top:5px;display:none}
-.note-field.visible{display:block}
-.note-field textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;background:var(--bg);color:var(--text);outline:none;resize:none;min-height:50px}
-.note-field textarea:focus{border-color:var(--gold)}
-.status-paid{background:var(--green-light);color:var(--green)}
-.status-pending{background:var(--amber-light);color:var(--amber)}
-.status-na{background:var(--bg);color:var(--text-muted)}
-.add-row-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--navy-light);background:none;border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:8px;cursor:pointer;width:100%;justify-content:center}
-.add-row-btn:hover{background:var(--bg)}
-.export-btn{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;margin-top:12px}
-.export-btn:hover{background:var(--navy-mid)}
-
-/* ── ADMIN LOG ── */
-.admin-overlay{position:fixed;inset:0;background:rgba(11,26,59,0.8);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.admin-overlay.hidden{display:none}
-.admin-box{background:var(--surface);border-radius:var(--radius);max-width:680px;width:94%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
-.admin-head{background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.admin-head h3{font-size:15px;font-weight:600;color:var(--gold)}
-.admin-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1}
-.admin-body{overflow-y:auto;flex:1}
-.log-item{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px}
-.log-item:last-child{border-bottom:none}
-.log-avatar{width:30px;height:30px;border-radius:50%;background:var(--navy-light);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
-.log-name{font-weight:600;color:var(--text)}
-.log-time{font-size:11px;color:var(--text-muted);margin-top:1px}
-.log-empty{padding:24px;text-align:center;color:var(--text-muted);font-size:13px}
-
-/* ── CONFETTI ── */
-.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
-.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:fall linear forwards}
-@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
-
-/* ── MISC ── */
-.info-box{background:var(--gold-pale);border:1px solid rgba(201,168,76,0.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:16px}
-.inline-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer;color:var(--text-muted);transition:all .15s}
-.inline-btn:hover{border-color:var(--navy);color:var(--text)}
-.page-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-@media(max-width:600px){
-  .bthead,.btrow{grid-template-columns:1fr 80px 28px}
-  .bthead span:nth-child(2),.bthead span:nth-child(3),.btrow span:nth-child(2),.btrow span:nth-child(3){display:none}
-  .hero h1{font-size:18px}
-}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- ══════════ NAME MODAL ══════════ -->
-<div class="modal-overlay" id="nameModal">
+<!-- ===================== CONFETTI CANVAS ===================== -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast"></div>
+<div class="undo-toast" id="undo-toast">
+  <span class="undo-msg"></span>
+  <button class="undo-btn">Undo</button>
+</div>
+
+<!-- ===================== LOGIN MODAL ===================== -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box login-box">
+    <div class="lion-logo">🦁</div>
+    <h2>LC Chennai Super Kings</h2>
+    <p>Enter your Lion Member ID to access the planner</p>
+    <input id="lionIdInput" type="text" placeholder="Enter your Lion ID" maxlength="20"
+      onkeydown="if(event.key==='Enter') attemptLogin(this.value)" autocomplete="off" />
+    <div class="login-error" id="loginError"></div>
+    <button class="btn-primary" style="width:100%" onclick="attemptLogin(document.getElementById('lionIdInput').value)">Enter Planner</button>
+    <div class="login-hint">Your Lion ID is the 5–8 digit number on your Lions membership card.<br>Contact Lion Shankar Kumar M (Secretary) if you need help.</div>
+  </div>
+</div>
+
+<!-- ===================== TASK MODAL ===================== -->
+<div class="modal-overlay hidden" id="taskModal">
   <div class="modal-box">
-    <div style="font-size:36px;text-align:center;margin-bottom:10px">🦁</div>
-    <h2>Welcome, Lion!</h2>
-    <p id="modalDesc">Choose your title and enter your full name. You'll only be asked once on this device.</p>
-    <div class="prefix-row">
-      <button class="prefix-btn active" id="pfxLion" onclick="selectPrefix('Lion')">Lion</button>
-      <button class="prefix-btn" id="pfxLeo" onclick="selectPrefix('Leo')">Leo</button>
-      <button class="prefix-btn" id="pfxPDG" onclick="selectPrefix('PDG Lion')">PDG Lion</button>
+    <h2 id="taskModalTitle">Edit Task</h2>
+    <input type="hidden" id="tm-id" />
+    <div class="modal-field"><label>Task Title *</label><input type="text" id="tm-title" placeholder="What needs to be done?" /></div>
+    <div class="modal-field"><label>Description / Note</label><textarea id="tm-note" placeholder="Additional details…"></textarea></div>
+    <div class="modal-field"><label>Responsible Person</label><input type="text" id="tm-who" placeholder="e.g. Secretary, Marketing Chair" /></div>
+    <div class="modal-field">
+      <label>Priority</label>
+      <select id="tm-priority">
+        <option value="urgent">Urgent</option>
+        <option value="high">High</option>
+        <option value="med" selected>Medium</option>
+        <option value="low">Low</option>
+      </select>
     </div>
-    <input class="modal-input" id="nameInput" type="text" placeholder="Enter your name (e.g. Ramesh Kumar)" maxlength="40"/>
-    <div class="modal-error" id="modalError"></div>
-    <button class="modal-btn" id="nameSubmitBtn" onclick="submitName()">Enter Planner</button>
-  </div>
-</div>
-
-<!-- ══════════ ADMIN OVERLAY ══════════ -->
-<div class="admin-overlay hidden" id="adminOverlay">
-  <div class="admin-box">
-    <div class="admin-head">
-      <h3>🔐 Admin — Activity Log</h3>
-      <button class="admin-close" onclick="document.getElementById('adminOverlay').classList.add('hidden')">✕</button>
-    </div>
-    <div class="admin-body" id="adminLogBody"><div class="log-empty">Loading…</div></div>
-  </div>
-</div>
-
-<!-- ══════════ TOAST CONTAINER ══════════ -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- ══════════ CONFETTI ══════════ -->
-<div class="confetti-wrap" id="confettiWrap"></div>
-
-<!-- ══════════ ONLINE OVERLAY ══════════ -->
-<div class="overlay" id="onlineOverlay" aria-hidden="true">
-  <div class="overlay-card">
-    <div class="overlay-head">
-      <h3>Members Online</h3>
-      <button class="overlay-close" onclick="closeOnlineOverlay()">✕</button>
-    </div>
-    <div class="online-list" id="onlineMembersList"></div>
-  </div>
-</div>
-
-<!-- ══════════ COUNTDOWN BANNER ══════════ -->
-<div class="countdown-banner hidden" id="countdownBanner">
-  <div style="color:rgba(255,255,255,0.5);font-size:12px">Installation in</div>
-  <div style="display:flex;gap:12px;align-items:center">
-    <div class="countdown-box"><div class="countdown-num" id="cdDays">—</div><div class="countdown-label">Days</div></div>
-    <div class="countdown-sep">:</div>
-    <div class="countdown-box"><div class="countdown-num" id="cdHours">—</div><div class="countdown-label">Hours</div></div>
-    <div class="countdown-sep">:</div>
-    <div class="countdown-box"><div class="countdown-num" id="cdMins">—</div><div class="countdown-label">Mins</div></div>
-  </div>
-  <button class="set-date-btn" onclick="promptSetDate()">✏ Change Date</button>
-</div>
-
-<!-- ══════════ PRESENCE BAR ══════════ -->
-<div class="presence-bar" id="presenceBar">
-  <div class="presence-dot"></div>
-  <span style="font-weight:500;color:var(--text)">Online now:</span>
-  <div id="presenceNames" style="display:flex;gap:5px;flex-wrap:wrap"></div>
-</div>
-
-<!-- ══════════ HERO ══════════ -->
-<div class="hero">
-  <div class="hero-actions">
-    <div class="hero-icon-btn" onclick="toggleDark()" title="Dark mode">🌙</div>
-    <div class="hero-icon-btn" onclick="openOnlineOverlay()" title="Online members">👥</div>
-  </div>
-  <div class="hero-badge">Lions Club · District 3241 E</div>
-  <h1>Lions Club of <span>Chennai Super Kings</span><br>Installation Planner</h1>
-  <p class="hero-sub">Club No. 192069 · Chartered 02-03-2026 · Live Shared</p>
-  <div class="hero-meta">
-    <div class="hero-meta-item"><div class="val" id="h-total">—</div><div class="lbl">Total Tasks</div></div>
-    <div class="hero-meta-item"><div class="val" id="h-done">—</div><div class="lbl">Completed</div></div>
-    <div class="hero-meta-item"><div class="val" id="h-pct">—</div><div class="lbl">Progress</div></div>
-    <div class="hero-meta-item"><div class="val" id="h-members">—</div><div class="lbl">Members Online</div></div>
-  </div>
-  <div class="user-tag" id="userTag" onclick="changeNamePrompt()">👤 <span id="userTagName">—</span> <span style="opacity:.5;font-size:10px">▼</span></div>
-</div>
-
-<!-- ══════════ MAIN NAV ══════════ -->
-<div class="main-tabs">
-  <div class="tab main-tab active" data-page="home" onclick="showMainPage('home')">🏠 Home</div>
-  <div class="tab main-tab" data-page="about" onclick="showMainPage('about')">ℹ About Club</div>
-  <div class="tab main-tab" data-page="events" onclick="showMainPage('events')">📅 Upcoming Events</div>
-  <div class="tab main-tab" data-page="installation" onclick="showMainPage('installation')">🛠 Club Installation</div>
-</div>
-<div class="install-tabs visible" id="installTabs">
-  <div class="tab install-tab active" data-page="planning" onclick="showInstallPage('planning')">📋 Planning</div>
-  <div class="tab install-tab" data-page="agenda" onclick="showInstallPage('agenda')">🎖 Agenda</div>
-  <div class="tab install-tab" data-page="chairs" onclick="showInstallPage('chairs')">👥 Chairpersons</div>
-  <div class="tab install-tab" data-page="budget" onclick="showInstallPage('budget')">💰 Budget</div>
-</div>
-
-<!-- ══════════ PAGE: HOME ══════════ -->
-<div class="page" id="page-home">
-<div class="container">
-  <div class="section-title">Home</div>
-  <p class="section-sub">A simple club home page with the Lions International overview and your club snapshot.</p>
-
-  <div class="home-grid">
-    <div class="info-card">
-      <h3>About Lions International</h3>
-      <p>Lions Clubs International is a global service organization built around one core idea: serve the community first. The focus areas are vision, hunger, environment, childhood cancer, diabetes, youth, disaster relief, and humanitarian service.</p>
-      <ul style="margin-top:10px;padding-left:18px">
-        <li>We lead with service, not noise.</li>
-        <li>We keep the focus on action, accountability, and impact.</li>
-        <li>We serve locally while staying connected to a worldwide network.</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h3>Club Snapshot</h3>
-      <p><strong>Club:</strong> Chennai Super Kings</p>
-      <p><strong>Lion ID:</strong> 192069</p>
-      <p><strong>Status:</strong> Newly Chartered</p>
-      <p><strong>Total Members:</strong> 20</p>
-      <p><strong>Parent Account:</strong> DISTRICT 3241 E</p>
-      <div class="event-actions" style="margin-top:14px">
-        <button class="quick-btn" onclick="showMainPage('installation')">Open Planner</button>
-        <button class="quick-btn ghost" onclick="showMainPage('about')">View About Club</button>
-      </div>
+    <div class="modal-field"><label>Deadline Date</label><input type="date" id="tm-deadline" /></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveTaskModal()">Save Task</button>
+      <button class="btn-outline" onclick="document.getElementById('taskModal').classList.add('hidden')">Cancel</button>
+      <button class="btn-danger" id="tm-delete" onclick="deleteTask()" style="margin-left:auto">Delete</button>
     </div>
   </div>
 </div>
-</div>
 
-<!-- ══════════ PAGE: ABOUT CLUB ══════════ -->
-<div class="page" id="page-about">
-<div class="container">
-  <div class="section-title">About Club</div>
-  <p class="section-sub">Official club details from your reference data, arranged for a clean public-facing club profile.</p>
-
-  <div class="detail-grid">
-    <div class="detail-card">
-      <h3>Details</h3>
-      <div class="detail-grid" style="grid-template-columns:1fr;gap:8px;margin-top:10px">
-        <div class="detail-item"><div class="k">Account</div><div class="v">Chennai Super Kings</div></div>
-        <div class="detail-item"><div class="k">Lion ID</div><div class="v">192069</div></div>
-        <div class="detail-item"><div class="k">Type</div><div class="v">Leo Lions</div></div>
-        <div class="detail-item"><div class="k">Status</div><div class="v">Newly Chartered</div></div>
-        <div class="detail-item"><div class="k">Total Member Count</div><div class="v">20</div></div>
-        <div class="detail-item"><div class="k">Parent Account</div><div class="v">DISTRICT 3241 E</div></div>
-        <div class="detail-item"><div class="k">Club Specialty</div><div class="v">Cause-Specific</div></div>
-        <div class="detail-item"><div class="k">Club Sub-Specialty</div><div class="v">Environment</div></div>
-        <div class="detail-item"><div class="k">Specialty Description</div><div class="v">E Waste</div></div>
-        <div class="detail-item"><div class="k">Charter Established Date</div><div class="v">3/2/2026</div></div>
-      </div>
-    </div>
-
-    <div class="detail-card">
-      <h3>Members</h3>
-      <p>Total members in the club: <strong>20</strong>. Use MyLCI for the final live roster, and keep this planner synced with the current officers and working team.</p>
-      <div class="chip-list">
-        <span class="chip-item">Ranganathan M</span><span class="chip-item">Ramesh Babu Venkataraman</span><span class="chip-item">Shankar Kumar M</span><span class="chip-item">Ragavi R</span><span class="chip-item">Aashaya Philip</span><span class="chip-item">PARTHASARATHY R</span><span class="chip-item">Aadhil Ahamed H</span><span class="chip-item">Sanjai Kumar M</span><span class="chip-item">Hari Prasath</span><span class="chip-item">DARSHIKA J</span><span class="chip-item">SELVA EMI M</span><span class="chip-item">SANDHYA B</span><span class="chip-item">Keerthi Dakki</span><span class="chip-item">K.V Udhaya Raj</span>
-      </div>
-    </div>
-
-    <div class="detail-card">
-      <h3>Data Export</h3>
-      <p>Keep a backup of the planner data and club profile before major changes. Export the database from Supabase when the event is complete or before larger edits.</p>
-      <div class="detail-item" style="margin-top:10px"><div class="k">Website</div><div class="v">To be added</div></div>
-      <div class="detail-item" style="margin-top:8px"><div class="k">Meeting Place</div><div class="v">To be finalised</div></div>
-      <div class="detail-item" style="margin-top:8px"><div class="k">Meeting Time</div><div class="v">To be finalised</div></div>
-    </div>
-  </div>
-
-  <div class="officer-list" style="margin-top:12px">
-    <div class="officer-card"><h3>Officers</h3><p><strong>President:</strong> K.V Udhaya Raj</p><p><strong>Secretary:</strong> Shankar Kumar M</p><p><strong>Treasurer:</strong> Aashaya Philip</p><p><strong>LCIF Coordinator:</strong> PARTHASARATHY R</p><p><strong>1st VP:</strong> Ragavi R</p><p><strong>2nd VP:</strong> Sanjai Kumar M</p></div>
-    <div class="officer-card"><h3>Club Leadership</h3><p><strong>Membership Chairperson:</strong> Aadhil Ahamed H</p><p><strong>Service Chairperson:</strong> DARSHIKA J</p><p><strong>Marketing Chairperson:</strong> SELVA EMI M</p><p><strong>Club Administrator:</strong> Keerthi Dakki</p><p><strong>Guiding Lions:</strong> Ranganathan M, Ramesh Babu Venkataraman</p></div>
-    <div class="officer-card"><h3>Official Contacts</h3><p><strong>Member Service Center:</strong> Lionssupport@lionsclubs.org</p><p><strong>Headquarters:</strong> USA · +1 630-468-6900</p><p><strong>ISAME Regional Office:</strong> India · +91 22-61217900</p><p><strong>OSEAL Regional Office:</strong> Japan · +81 50-1791-5820</p><p><strong>Korea Regional Office:</strong> Korea · +82 2-720-3322</p></div>
-  </div>
-</div>
-</div>
-
-<!-- ══════════ PAGE: UPCOMING EVENTS ══════════ -->
-<div class="page" id="page-events">
-<div class="container">
-  <div class="section-title">Upcoming Events</div>
-  <p class="section-sub">The planner is centred on the club installation. These shortcuts take you straight into the working sections.</p>
-
-  <div class="event-grid">
-    <div class="event-card">
-      <h3>Club Installation</h3>
-      <p>Main event hub for the current planner. Use the four sections below to handle the work in sequence.</p>
-      <div class="chip-list"><span class="chip-item">Planning</span><span class="chip-item">Agenda</span><span class="chip-item">Chairpersons</span><span class="chip-item">Budget</span></div>
-      <div class="event-actions">
-        <button class="quick-btn" onclick="showMainPage('installation')">Open Club Installation</button>
-      </div>
-    </div>
-    <div class="event-card">
-      <h3>Planning Snapshot</h3>
-      <p>Use the planning section to track setup tasks, approvals, venue work, branding, and final-week checklists.</p>
-      <div class="event-actions"><button class="quick-btn ghost" onclick="showMainPage('installation');showInstallPage('planning')">Go to Planning</button></div>
-    </div>
-    <div class="event-card">
-      <h3>Agenda Snapshot</h3>
-      <p>Use the agenda section for the event flow, speeches, installation moments, and closing protocol.</p>
-      <div class="event-actions"><button class="quick-btn ghost" onclick="showMainPage('installation');showInstallPage('agenda')">Go to Agenda</button></div>
+<!-- ===================== PHASE MODAL ===================== -->
+<div class="modal-overlay hidden" id="phaseModal">
+  <div class="modal-box">
+    <h2>Phase</h2>
+    <input type="hidden" id="pm-id" />
+    <div class="modal-field"><label>Phase Name *</label><input type="text" id="pm-label" placeholder="e.g. Phase 7 — Follow Up" /></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="savePhaseModal()">Save</button>
+      <button class="btn-outline" onclick="document.getElementById('phaseModal').classList.add('hidden')">Cancel</button>
     </div>
   </div>
 </div>
+
+<!-- ===================== AGENDA MODAL ===================== -->
+<div class="modal-overlay hidden" id="agendaModal">
+  <div class="modal-box">
+    <h2>Agenda Item</h2>
+    <input type="hidden" id="am-id" />
+    <div class="modal-field"><label>Title *</label><input type="text" id="am-title" placeholder="Item title" /></div>
+    <div class="modal-field"><label>Description</label><textarea id="am-detail" placeholder="Details…"></textarea></div>
+    <div class="modal-field"><label>Time</label><input type="text" id="am-time" placeholder="e.g. 5:00 PM" /></div>
+    <div class="modal-field"><label>Duration (minutes)</label><input type="number" id="am-duration" value="5" min="1" /></div>
+    <div class="modal-field">
+      <label>Category</label>
+      <select id="am-type">
+        <option value="protocol">Protocol</option>
+        <option value="ceremony">Ceremony</option>
+        <option value="speech">Speech</option>
+        <option value="service">Service</option>
+        <option value="felicitation">Felicitation</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveAgendaModal()">Save</button>
+      <button class="btn-outline" onclick="document.getElementById('agendaModal').classList.add('hidden')">Cancel</button>
+      <button class="btn-danger" id="am-delete" onclick="deleteAgendaItem()" style="margin-left:auto">Delete</button>
+    </div>
+  </div>
 </div>
 
-<!-- ══════════ PAGE: PLANNING ══════════ -->
-<div class="page active" id="page-planning">
-<div class="container">
-  <div class="section-title">Planning & Checklist</div>
-  <p class="section-sub">Click any task to mark done. Use ↑↓ to reorder. All changes sync live.</p>
-  <div class="install-hint">This is the working centre of the club installation planner. The main sections are organized under Club Installation.</div>
-
-  <div class="dash-grid">
-    <div class="dash-card"><div class="num" id="p-total" style="color:var(--teal)">—</div><div class="lbl">Total Tasks</div><div class="dash-bar"><div class="dash-fill" id="p-bar" style="width:0%"></div></div></div>
-    <div class="dash-card"><div class="num" id="p-done" style="color:var(--green)">—</div><div class="lbl">Completed</div></div>
-    <div class="dash-card"><div class="num" id="p-urgent" style="color:var(--red)">—</div><div class="lbl">Urgent</div></div>
-    <div class="dash-card"><div class="num" id="p-pct" style="color:var(--gold)">—</div><div class="lbl">Complete</div></div>
+<!-- ===================== CHAIR MODAL ===================== -->
+<div class="modal-overlay hidden" id="chairModal">
+  <div class="modal-box">
+    <h2>Chairperson Role</h2>
+    <input type="hidden" id="chm-id" />
+    <div class="modal-field"><label>Role Name *</label><input type="text" id="chm-name" placeholder="e.g. Health & Wellness Chairperson" /></div>
+    <div class="modal-field"><label>LCI Cause / Programme</label><input type="text" id="chm-lci" placeholder="e.g. LCI Global Cause: Vision" /></div>
+    <div class="modal-field"><label>Project Tags (comma separated)</label><input type="text" id="chm-tags" placeholder="Blood Donation, Eye Camp, Medical Camp" /></div>
+    <div class="modal-field"><label>Duties & Responsibilities</label><textarea id="chm-duties" placeholder="Describe the duties…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveChairModal()">Save</button>
+      <button class="btn-outline" onclick="document.getElementById('chairModal').classList.add('hidden')">Cancel</button>
+      <button class="btn-danger" id="chm-delete" onclick="deleteChair()" style="margin-left:auto">Delete</button>
+    </div>
   </div>
-
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-    <button class="filter-btn" onclick="setFilter('urgent',this)">🔴 Urgent</button>
-    <button class="filter-btn" onclick="setFilter('high',this)">🟠 High</button>
-    <button class="filter-btn" onclick="setFilter('med',this)">🟢 Medium</button>
-    <button class="filter-btn" onclick="setFilter('low',this)">🔵 Low</button>
-    <button class="filter-btn" onclick="setFilter('pending',this)">⬜ Pending</button>
-    <button class="filter-btn" onclick="setFilter('done',this)">✅ Done</button>
-    <button class="filter-btn" onclick="setFilter('overdue',this)">⚠ Overdue</button>
-    <select class="sort-select" onchange="setSort(this.value)">
-      <option value="default">Sort: Default</option>
-      <option value="deadline">Sort: Deadline</option>
-      <option value="priority">Sort: Priority</option>
-      <option value="done">Sort: Done last</option>
-    </select>
-  </div>
-
-  <div style="margin-bottom:12px">
-    <button class="inline-btn" onclick="addPhasePrompt()">+ Add Phase</button>
-  </div>
-
-  <div id="phases-container"></div>
-</div>
 </div>
 
-<!-- ══════════ PAGE: AGENDA ══════════ -->
+<!-- ===================== ONLINE DROPDOWN ===================== -->
+<div class="dropdown" id="onlineDropdown">
+  <div style="padding:10px 14px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">Online Now</div>
+  <div id="online-list"><div style="padding:10px 14px;font-size:13px;color:var(--text-muted)">Loading…</div></div>
+</div>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="navbar">
+  <div class="nav-brand">🦁 LC CSK</div>
+  <div class="nav-item active" onclick="showPage('home')" id="nav-home">Home</div>
+  <div class="nav-item" onclick="showPage('about')" id="nav-about">About Club</div>
+  <div class="nav-item" onclick="toggleEventsMenu(event)" id="nav-events">Events ▾</div>
+  <div class="dropdown" id="eventsDropdown" style="top:52px;left:0">
+    <div style="padding:8px 14px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Club Installation</div>
+    <div class="dropdown-item" onclick="showPage('planning');closeDropdowns()">📋 Planning & Checklist</div>
+    <div class="dropdown-item" onclick="showPage('agenda');closeDropdowns()">🎖 Installation Agenda</div>
+    <div class="dropdown-item" onclick="showPage('chairs');closeDropdowns()">👥 Chairperson Roles</div>
+    <div class="dropdown-item" onclick="showPage('budget');closeDropdowns()">💰 Budget Tracker</div>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-right">
+    <span class="user-chip" id="userChip" onclick="logout()">—</span>
+    <div style="position:relative">
+      <button class="nav-icon-btn" onclick="toggleOnlinePanel(event)" title="Who's online" id="onlineBtn">👥</button>
+    </div>
+    <button class="nav-icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode" id="darkBtn">🌙</button>
+    <button class="nav-icon-btn" onclick="logout()" title="Log out">🚪</button>
+  </div>
+</nav>
+
+<!-- ===================== COUNTDOWN BANNER ===================== -->
+<div class="countdown-banner" id="countdown-banner"></div>
+
+<!-- ===================== PAGES ===================== -->
+
+<!-- HOME -->
+<div class="page active" id="page-home"></div>
+
+<!-- ABOUT CLUB -->
+<div class="page" id="page-about"></div>
+
+<!-- PLANNING -->
+<div class="page" id="page-planning">
+  <div class="hero">
+    <div class="hero-badge">Lions Club · District 3241 E</div>
+    <h1>Installation Planning<br><span>Checklist</span></h1>
+    <p class="hero-sub">Live synced across all members · Every action is tagged</p>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><div class="val" id="h-total">—</div><div class="lbl">Total Tasks</div></div>
+      <div class="hero-meta-item"><div class="val" id="h-done">—</div><div class="lbl">Done</div></div>
+      <div class="hero-meta-item"><div class="val" id="h-pct">—</div><div class="lbl">Progress</div></div>
+    </div>
+  </div>
+  <div class="container">
+    <div class="progress-grid">
+      <div class="prog-card"><div class="num" id="p-total" style="color:var(--teal)">—</div><div class="label">Total</div><div class="prog-bar"><div class="prog-fill" id="p-bar" style="width:0%"></div></div></div>
+      <div class="prog-card"><div class="num" id="p-done" style="color:var(--green)">—</div><div class="label">Done</div></div>
+      <div class="prog-card"><div class="num" id="p-urgent" style="color:var(--red)">—</div><div class="label">Urgent Pending</div></div>
+      <div class="prog-card"><div class="num" id="p-pct" style="color:var(--gold)">—</div><div class="label">Complete</div></div>
+    </div>
+    <div class="filter-bar" id="filter-bar"></div>
+    <div id="phases-container"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</div></div>
+  </div>
+</div>
+
+<!-- AGENDA -->
 <div class="page" id="page-agenda">
-<div class="container">
-  <div class="section-title">Installation Ceremony Agenda</div>
-  <p class="section-sub">Tick items live during the event. Use ↑↓ to reorder. Numbers auto-update.</p>
-  <div class="info-box">★ Protocol: PDG felicitations follow strict LCI order. Confirm Installation Officer 3 weeks before.</div>
-  <div class="page-actions">
-    <button class="inline-btn" onclick="addAgendaItem()">+ Add Agenda Item</button>
+  <div class="container">
+    <div class="section-title">Installation Ceremony Agenda</div>
+    <p class="section-sub">Tick items live during the event. Everyone sees updates in real time.</p>
+    <div class="info-box">★ Protocol: PDG felicitations follow strict Lions International order. Installation Officer must be confirmed 3 weeks before.</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div id="agenda-total-display" style="font-size:13px;color:var(--text-muted)"></div>
+      <button class="btn-outline btn-sm" onclick="editAgendaItem('new')">+ Add Agenda Item</button>
+    </div>
+    <div id="agenda-container"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</div></div>
+    <div class="agenda-summary" id="agenda-summary-box">
+      <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:16px">Total Duration</strong>
+      <div style="margin-top:6px;color:rgba(255,255,255,0.65)">
+        Estimated total: <strong style="color:var(--gold)" id="agenda-total-duration">—</strong>
+      </div>
+    </div>
   </div>
-  <div class="agenda-list" id="agenda-container"></div>
-  <div class="agenda-duration-total" id="duration-total">
-    <strong style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px">Total Duration</strong>
-    <div style="margin-top:5px;color:rgba(255,255,255,0.65);font-size:13px" id="duration-text">Calculating…</div>
-  </div>
-</div>
 </div>
 
-<!-- ══════════ PAGE: CHAIRS ══════════ -->
+<!-- CHAIRS -->
 <div class="page" id="page-chairs">
-<div class="container">
-  <div class="section-title">Chairperson Roles</div>
-  <p class="section-sub">Assign Lions to each role. Add new chairpersons. All synced live.</p>
-  <div class="info-box">★ All roles mapped to LCI Global Causes: Diabetes · Hunger · Environment · Vision · Childhood Cancer · Humanitarian</div>
-  <div class="chair-grid" id="chair-grid"></div>
-  <div style="margin-top:14px">
-    <div class="add-chair-btn" onclick="addChairperson()">+ Add New Chairperson Role</div>
+  <div class="container">
+    <div class="section-title">Chairperson Roles & Responsibilities</div>
+    <p class="section-sub">Mapped to LCI Global Causes and DG thrust areas. Assign Lions to each role.</p>
+    <div class="info-box">★ LCI Global Causes: Diabetes · Hunger · Environment · Vision · Childhood Cancer · Humanitarian. DG Thrust: Hunger & Healthcare.</div>
+    <div class="chair-grid" id="chair-grid"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading…</div></div>
   </div>
 </div>
-</div>
 
-<!-- ══════════ PAGE: BUDGET ══════════ -->
+<!-- BUDGET -->
 <div class="page" id="page-budget">
-<div class="container">
-  <div class="section-title">Budget Tracker</div>
-  <p class="section-sub">Click 📝 to add a note to any item. All edits tagged with your name.</p>
-  <div class="budget-summary">
-    <div class="bsum"><div class="val" id="b-total" style="color:var(--navy)">₹0</div><div class="lbl">Total Estimated</div></div>
-    <div class="bsum"><div class="val" id="b-paid" style="color:var(--green)">₹0</div><div class="lbl">Paid</div></div>
-    <div class="bsum"><div class="val" id="b-pending" style="color:var(--red)">₹0</div><div class="lbl">Pending</div></div>
-    <div class="bsum"><div class="val" style="color:var(--teal)">₹40,000</div><div class="lbl">Collected (₹2k×20)</div></div>
+  <div class="container">
+    <div class="section-title">Budget Tracker</div>
+    <p class="section-sub">All edits are tagged with your name and synced live. Click 📝 for notes.</p>
+    <div class="budget-summary">
+      <div class="bsum"><div class="val" id="b-total" style="color:var(--navy)">₹0</div><div class="lbl">Total Estimated</div></div>
+      <div class="bsum"><div class="val" id="b-paid" style="color:var(--green)">₹0</div><div class="lbl">Paid</div></div>
+      <div class="bsum"><div class="val" id="b-pending" style="color:var(--red)">₹0</div><div class="lbl">Pending</div></div>
+      <div class="bsum"><div class="val" style="color:var(--teal)">₹40,000</div><div class="lbl">Collected (₹2k×20)</div></div>
+    </div>
+    <div class="budget-sort-bar">
+      <span style="font-size:12px;color:var(--text-muted)">Filter:</span>
+      <button class="budget-filter-btn active" onclick="setBudgetFilter('all',this)">All</button>
+      <button class="budget-filter-btn" onclick="setBudgetFilter('pending',this)">Pending</button>
+      <button class="budget-filter-btn" onclick="setBudgetFilter('paid',this)">Paid</button>
+      <button class="budget-filter-btn" onclick="setBudgetFilter('na',this)">N/A</button>
+      <button class="btn-outline btn-sm" style="margin-left:auto" onclick="exportBudgetPDF()">⬇ Export PDF</button>
+    </div>
+    <div class="budget-table">
+      <div class="bthead"><span>Item</span><span>Estimated (₹)</span><span>Actual (₹)</span><span>Status</span><span></span></div>
+      <div id="budget-rows"></div>
+    </div>
+    <button class="add-row-btn" onclick="addBudgetRow()">+ Add expense item</button>
   </div>
-  <div class="budget-sort">
-    <button class="filter-btn active" onclick="setBudgetSort('all',this)">All</button>
-    <button class="filter-btn" onclick="setBudgetSort('paid',this)">✅ Paid</button>
-    <button class="filter-btn" onclick="setBudgetSort('pending',this)">⏳ Pending</button>
-    <button class="filter-btn" onclick="setBudgetSort('na',this)">— N/A</button>
-  </div>
-  <div class="budget-table">
-    <div class="bthead"><span>Item</span><span>Est (₹)</span><span>Actual (₹)</span><span>Status</span><span></span></div>
-    <div id="budget-rows"></div>
-  </div>
-  <button class="add-row-btn" onclick="addBudgetRow()">+ Add expense item</button>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-    <button class="export-btn" onclick="exportBudgetPDF()">📄 Export Budget PDF</button>
-  </div>
-</div>
 </div>
 
-<!-- ══════════ STATIC DATA (JS) ══════════ -->
+<!-- ADMIN (hidden, accessed via CSKAdmin) -->
+<div class="page" id="page-admin">
+  <div class="container">
+    <div class="section-title">Admin Panel</div>
+    <p class="section-sub">Restricted — Secretary access only.</p>
+    <div class="admin-actions">
+      <button class="btn-outline" onclick="loadActivityLog()">↻ Refresh Log</button>
+      <button class="btn-reset" onclick="resetAllData()">⚠️ Reset All Data</button>
+    </div>
+    <h3 style="margin-bottom:12px;font-size:16px">Members List</h3>
+    <div id="members-table" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px"></div>
+    <h3 style="margin-bottom:12px;font-size:16px">Activity Log</h3>
+    <div class="log-wrap">
+      <div class="log-head">All Activity <span onclick="loadActivityLog()">↻ Refresh</span></div>
+      <div id="activity-log"><div class="log-empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/planning.js"></script>
+<script src="js/pages.js"></script>
+
 <script>
-// ─────────────────────────────────────────────────────────────
-// PART 1 — STATIC DATA
-// ─────────────────────────────────────────────────────────────
+// ============= HELPERS =============
+function setText(id, val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+function setStyle(id, prop, val){ const el=document.getElementById(id); if(el) el.style[prop]=val; }
 
-const DEFAULT_PHASES = [
-  { id:'ph0', label:'Phase 1 — Foundation (6+ weeks before)', cls:'ph-0', tasks:[
-    {id:'t0_0',title:'Apply for club PAN card',desc:'Required for bank account and all official transactions',who:'President + Secretary',priority:'urgent',deadline:''},
-    {id:'t0_1',title:'Prepare rubber stamp',desc:'Club name, number, district — needed for banking and official documents',who:'Secretary',priority:'urgent',deadline:''},
-    {id:'t0_2',title:'Open Karur Vysya Bank account',desc:'Bring: PAN card, rubber stamp, bylaws, 2 officer signatures',who:'President + Treasurer',priority:'urgent',deadline:''},
-    {id:'t0_3',title:'Print and bind Constitution & By-Laws',desc:'Minimum 5 copies — Board, Secretary, display',who:'Secretary',priority:'urgent',deadline:''},
-    {id:'t0_4',title:'Confirm Installation Officer',desc:'Request PDG Mahesh or PDG Sampath well in advance',who:'President',priority:'urgent',deadline:''},
-    {id:'t0_5',title:'Notify District Governor and obtain approval',desc:'Send formal letter with event date and venue',who:'President + Secretary',priority:'urgent',deadline:''},
-    {id:'t0_6',title:'Elect and confirm all club officers and chairpersons',desc:'Ensure GAT team — Membership, Service, Marketing chairs are finalised',who:'Board',priority:'urgent',deadline:''},
-    {id:'t0_7',title:'Set Installation event date',desc:'Align with DG calendar and venue availability',who:'President',priority:'urgent',deadline:''},
-  ]},
-  { id:'ph1', label:'Phase 2 — Branding & Merchandise (4–5 weeks before)', cls:'ph-1', tasks:[
-    {id:'t1_0',title:'Finalise T-shirt design',desc:'Check both screen print and embroidery options',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t1_1',title:'Collect T-shirt sizes from all members',desc:'Use WhatsApp form or Google Form',who:'Secretary',priority:'high',deadline:''},
-    {id:'t1_2',title:'Place T-shirt order with vendor',desc:'1 per person — include installation officer and guests',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t1_3',title:'Design club letter pad layout',desc:'Include LCI logo, club name, number, address, officer names',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t1_4',title:'Print letter pads (50–100 copies)',desc:'',who:'Secretary',priority:'med',deadline:''},
-    {id:'t1_5',title:'Procure Gong and Gavel',desc:'Available from Lions supply or brass market',who:'Lion Tamer',priority:'med',deadline:''},
-    {id:'t1_6',title:'Purchase ties for PST Installation ceremony',desc:'For incoming and outgoing president — confirm protocol colour',who:'President',priority:'med',deadline:''},
-    {id:'t1_7',title:'Design and print club ID cards for all members',desc:'',who:'Secretary',priority:'med',deadline:''},
-  ]},
-  { id:'ph2', label:'Phase 3 — Event Logistics (3–4 weeks before)', cls:'ph-2', tasks:[
-    {id:'t2_0',title:'Book and confirm venue',desc:'Confirm capacity, AV, stage, seating, parking',who:'Program Coordinator',priority:'urgent',deadline:''},
-    {id:'t2_1',title:'Check venue quality at Sabari',desc:'Confirm banquet setup, PA system, projector screen',who:'Program Coordinator',priority:'urgent',deadline:''},
-    {id:'t2_2',title:'Prepare guest list',desc:'DG, District Officers, PDGs, sponsors, families, media',who:'Secretary + President',priority:'high',deadline:''},
-    {id:'t2_3',title:'Send formal invitation letters to PDGs and DG',desc:'At least 3 weeks before — include protocol briefing',who:'Secretary',priority:'high',deadline:''},
-    {id:'t2_4',title:'Send digital invites to all members and families',desc:'',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t2_5',title:'Design installation banner and flex board',desc:'Include all officer names, LCI logo, district logo',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t2_6',title:'Print banners, standees, and stage backdrop',desc:'',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t2_7',title:'Arrange photographer and videographer',desc:'Official installation must be documented',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t2_8',title:'Finalise caterer and refreshment plan',desc:'Tea, snacks, or dinner depending on event time',who:'Program Coordinator',priority:'med',deadline:''},
-    {id:'t2_9',title:'Arrange mementos for PDGs and special guests',desc:'',who:'President',priority:'med',deadline:''},
-  ]},
-  { id:'ph3', label:'Phase 4 — Content & Presentations (2–3 weeks before)', cls:'ph-3', tasks:[
-    {id:'t3_0',title:'Prepare Calendar of Events presentation',desc:'Monthly service plan for the year — to be shown at installation',who:'Service Chair',priority:'high',deadline:''},
-    {id:'t3_1',title:'Finalise Welcome Kit contents',desc:'Bylaws, ID card, membership card, Lions badge, welcome letter, calendar',who:'Secretary + Membership Chair',priority:'high',deadline:''},
-    {id:'t3_2',title:'Prepare video presentation for member introductions',desc:'Another member introduces each officer — record short intros',who:'Marketing Chair',priority:'high',deadline:''},
-    {id:'t3_3',title:'Brief the MC on agenda flow',desc:'Rehearse stage cues, introduction scripts, mic handover',who:'Program Coordinator',priority:'high',deadline:''},
-    {id:'t3_4',title:'Identify Project of the Day',desc:'Blood donation drive or food distribution preferred',who:'Service Chair',priority:'high',deadline:''},
-    {id:'t3_5',title:'Draft Vote of Thanks speech',desc:'',who:'Designated member',priority:'med',deadline:''},
-    {id:'t3_6',title:'Prepare social media content plan for event day',desc:'Instagram reels, posts, stories — plan hashtags and timing',who:'Marketing Chair',priority:'med',deadline:''},
-  ]},
-  { id:'ph4', label:'Phase 5 — Final Week & Event Day', cls:'ph-4', tasks:[
-    {id:'t4_0',title:'Confirm attendance of all PDGs and Installation Officer',desc:'Call each PDG personally 3 days before',who:'President + Secretary',priority:'urgent',deadline:''},
-    {id:'t4_1',title:'Conduct dry run of stage proceedings',desc:'Walk through full agenda with MC and all officers',who:'Program Coordinator',priority:'urgent',deadline:''},
-    {id:'t4_2',title:'Ensure gong, gavel, Lions flag, National flag are at venue',desc:'',who:'Lion Tamer',priority:'urgent',deadline:''},
-    {id:'t4_3',title:'Set up stage and seating 2 hours before event',desc:'',who:'Lion Tamer + Team',priority:'urgent',deadline:''},
-    {id:'t4_4',title:'Test all AV equipment — mic, projector, laptop',desc:'',who:'Program Coordinator',priority:'urgent',deadline:''},
-    {id:'t4_5',title:'T-shirt release ceremony',desc:'Distribute to all members at the event',who:'Marketing Chair + President',priority:'high',deadline:''},
-    {id:'t4_6',title:'Conduct installation ceremony per agenda',desc:'',who:'All Officers + Installation Officer',priority:'urgent',deadline:''},
-    {id:'t4_7',title:'Post live updates on Instagram during event',desc:'',who:'Marketing Chair',priority:'med',deadline:''},
-  ]},
-  { id:'ph5', label:'Phase 6 — Post-Installation (within 1 week)', cls:'ph-5', tasks:[
-    {id:'t5_0',title:'Report new officers to LCI International Office',desc:'Secretary must submit within 15 days of election — Article II Sec 1',who:'Secretary',priority:'urgent',deadline:''},
-    {id:'t5_1',title:'Submit event photos and report to District Governor',desc:'',who:'Secretary',priority:'high',deadline:''},
-    {id:'t5_2',title:'Issue Thank You letters to all PDGs and guests',desc:'',who:'President + Secretary',priority:'high',deadline:''},
-    {id:'t5_3',title:'File all financial receipts and update budget tracker',desc:'',who:'Treasurer',priority:'high',deadline:''},
-    {id:'t5_4',title:'Conduct first formal Board of Directors meeting',desc:'Set meeting schedule, committees, and year plan approval',who:'President',priority:'high',deadline:''},
-    {id:'t5_5',title:'Activate club on MyLCI portal',desc:'Register members, update officer list',who:'Secretary',priority:'high',deadline:''},
-    {id:'t5_6',title:'Tie up with Uravugal Trust for community project',desc:'',who:'Service Chair',priority:'med',deadline:''},
-  ]}
-];
+// ============= NAVIGATION =============
+const PAGE_INIT = { planning:false, agenda:false, chairs:false, budget:false, admin:false };
 
-const DEFAULT_AGENDA = [
-  {id:'a0',n:1,title:'Meeting called to order',detail:'By the Presiding Officer / Host Club President',time:'5:00 PM',duration:2,type:'protocol'},
-  {id:'a1',n:2,title:'Lions Prayer',detail:'All rise — led by a senior Lion',time:'5:02 PM',duration:2,type:'protocol'},
-  {id:'a2',n:3,title:'Leo Pledge',detail:'Led by the Leo Club installation officer',time:'5:04 PM',duration:1,type:'protocol'},
-  {id:'a3',n:4,title:'National Flag Salutation & National Anthem',detail:'All stand at attention',time:'5:05 PM',duration:3,type:'protocol'},
-  {id:'a4',n:5,title:'Welcome Address',detail:'By Host Club President — welcome PDGs, DG, dignitaries, guests',time:'5:08 PM',duration:5,type:'speech'},
-  {id:'a5',n:6,title:'Charter Night Celebration',detail:'Special address by senior PDG — significance of chartering LC CSK',time:'5:13 PM',duration:8,type:'ceremony'},
-  {id:'a6',n:7,title:'Introduction of Induction Officer',detail:'MC introduces the PDG conducting member induction',time:'5:21 PM',duration:2,type:'protocol'},
-  {id:'a7',n:8,title:'Induction Ceremony — New Members',detail:'PDG formally inducts all founding members. Members take the Lions Pledge.',time:'5:23 PM',duration:12,type:'ceremony'},
-  {id:'a8',n:9,title:'T-Shirt Release & Welcome Kit Distribution',detail:'President releases club T-shirts to members — CSK innovation moment!',time:'5:35 PM',duration:5,type:'ceremony'},
-  {id:'a9',n:10,title:'Introduction of Lions Installation Officer',detail:'MC formally introduces the Installation Officer',time:'5:40 PM',duration:2,type:'protocol'},
-  {id:'a10',n:11,title:'Installation of Lion Officers',detail:'PDG installs all officers including all Chairpersons',time:'5:42 PM',duration:20,type:'ceremony'},
-  {id:'a11',n:12,title:'Maiden Speeches by Installed Officers',detail:'President + key officers — 2 minutes each. Max 4–5 speakers.',time:'6:02 PM',duration:12,type:'speech'},
-  {id:'a12',n:13,title:'Calendar of Events Presentation',detail:'Service Chair presents year plan — projects, drives, DG thrust areas',time:'6:14 PM',duration:5,type:'service'},
-  {id:'a13',n:14,title:'Project of the Day Announcement',detail:'Blood donation drive / food distribution — first service project launched',time:'6:19 PM',duration:5,type:'service'},
-  {id:'a14',n:15,title:'Vision & Eye Donation Pledge',detail:'All members take eye donation pledge — officer reads declaration',time:'6:24 PM',duration:3,type:'service'},
-  {id:'a15',n:16,title:'Honouring of PDGs and Special Guests',detail:'Present mementos, shawls to each PDG and DG',time:'6:27 PM',duration:10,type:'felicitation'},
-  {id:'a16',n:17,title:'Felicitation by District Officers',detail:'District Zone Chairperson / Region Chairperson address',time:'6:37 PM',duration:5,type:'felicitation'},
-  {id:'a17',n:18,title:'Felicitation by Senior PDG',detail:'Senior PDG\'s blessing and message for LC CSK',time:'6:42 PM',duration:5,type:'felicitation'},
-  {id:'a18',n:19,title:'Vote of Thanks',detail:'Thank Installation Officer, PDGs, DG, host club, sponsors, members and families',time:'6:47 PM',duration:4,type:'speech'},
-  {id:'a19',n:20,title:'Lions Toast & Closing',detail:'Traditional Lions toast. Meeting formally closed by newly installed President.',time:'6:51 PM',duration:3,type:'protocol'},
-];
+function showPage(id){
+  if(!SESSION && id!=='home'){ return; }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const page = document.getElementById('page-'+id);
+  if(page) page.classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+  closeDropdowns();
 
-const DEFAULT_CHAIRS = [
-  {id:'c0',name:'Health & Wellness Chairperson',lci:'LCI Global Cause: Diabetes · DG Thrust: Healthcare',icon:'🏥',bg:'#E0F2EE',iconBg:'#0D7C6B',tags:['Medical Camp','Blood Donation','Eye Camp','Diabetes Awareness','Dental Camp'],tagColor:'#0D7C6B',tagBg:'#E0F2EE',duties:'Organise 4+ health camps per year. Coordinate with hospitals and NGOs. Report beneficiary count to LCI. Champion vision screening and blood donation drives.',assigned_to:'',assigned_by:''},
-  {id:'c1',name:'Hunger & Food Security Chairperson',lci:'LCI Global Cause: Hunger · DG Thrust: Hunger Relief',icon:'🍚',bg:'#FEF3DC',iconBg:'#9C6A0A',tags:['Food Distribution','Annadhanam','Ration Kit Drive','Mid-Day Meal','Uravugal Trust'],tagColor:'#9C6A0A',tagBg:'#FEF3DC',duties:'Plan monthly food distribution drives. Coordinate Annadhanam during festivals. Partner with Uravugal Trust and other NGOs. Track number of meals served.',assigned_to:'',assigned_by:''},
-  {id:'c2',name:'Environment Chairperson',lci:'LCI Global Cause: Environment',icon:'🌿',bg:'#E8F5EC',iconBg:'#2A6B3A',tags:['Tree Plantation','Beach Cleaning','Community Clean-Up','Plastic-Free Drive'],tagColor:'#2A6B3A',tagBg:'#E8F5EC',duties:'Lead 2 environmental activities per quarter. Coordinate tree plantation with Chennai Corporation. Organise coastal and community clean-up drives.',assigned_to:'',assigned_by:''},
-  {id:'c3',name:'Vision Chairperson',lci:'LCI Global Cause: Vision (Lions founding cause)',icon:'👁',bg:'#F0EAFA',iconBg:'#5A3A8A',tags:['Eye Camp','Vision Screening','Spectacle Donation','Eye Donation Pledge'],tagColor:'#5A3A8A',tagBg:'#F0EAFA',duties:'Organise 2+ eye camps per year. Register members as eye donors. Coordinate with Rotary Eye Banks. Raise funds for cataract surgeries. Submit data to LCI SightFirst.',assigned_to:'',assigned_by:''},
-  {id:'c4',name:'Youth & Leo Chairperson',lci:'LCI Programme: Leo Clubs · Youth Camps',icon:'🎓',bg:'#E8F0FF',iconBg:'#1A2F5A',tags:['Leo Club Formation','Youth Leadership','School Awareness','Scholarship Drive'],tagColor:'#1A2F5A',tagBg:'#E8F0FF',duties:'Initiate process to form a Leo Club. Organise youth leadership programmes. Identify student talent for scholarships. Run career guidance and skills workshops.',assigned_to:'',assigned_by:''},
-  {id:'c5',name:'Childhood Cancer & Disability Chairperson',lci:'LCI Global Cause: Childhood Cancer',icon:'🎗',bg:'#FDECEA',iconBg:'#B83A2A',tags:['Cancer Awareness','CANKIDS Support','Wheelchair Donation','Assistive Devices'],tagColor:'#B83A2A',tagBg:'#FDECEA',duties:'Organise childhood cancer awareness drives. Coordinate with hospitals for paediatric cancer patients. Collect and distribute wheelchairs. Apply for LCIF grants.',assigned_to:'',assigned_by:''},
-  {id:'c6',name:'Women Empowerment Chairperson',lci:'LCI Programme: Women Initiatives',icon:'💜',bg:'#F5E6FF',iconBg:'#6A3A9A',tags:['Skill Training','Self-Help Groups','Hygiene Awareness','Women Safety'],tagColor:'#6A3A9A',tagBg:'#F5E6FF',duties:'Plan skill development programmes for women. Coordinate hygiene and health awareness. Partner with Self-Help Groups. Organise women\'s safety awareness sessions.',assigned_to:'',assigned_by:''},
-  {id:'c7',name:'Disaster Relief & Humanitarian Chairperson',lci:'LCI Global Cause: Humanitarian · LCIF Disaster Relief',icon:'🤝',bg:'#FEF3DC',iconBg:'#854F0B',tags:['Flood Relief','Emergency Kits','LCIF Grant','Aid Coordination'],tagColor:'#854F0B',tagBg:'#FEF3DC',duties:'Maintain emergency response roster. Coordinate relief during floods or disasters. Apply for LCIF Disaster Relief grants. Liaise with district DRT.',assigned_to:'',assigned_by:''},
-];
-
-const DEFAULT_BUDGET = [
-  {id:'b1',item:'Venue booking',cat:'Event',est:25000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b2',item:'Stage & decoration',cat:'Event',est:15000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b3',item:'Catering / refreshments',cat:'Event',est:20000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b4',item:'Photographer & videographer',cat:'Event',est:8000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b5',item:'Banner, flex, standee printing',cat:'Branding',est:6000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b6',item:'T-shirts (20 members × ₹500)',cat:'Merchandise',est:10000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b7',item:'Letter pad printing',cat:'Branding',est:2000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b8',item:'Rubber stamp',cat:'Admin',est:500,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b9',item:'Gong and Gavel',cat:'Equipment',est:3000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b10',item:'Ties for PST installation',cat:'Merchandise',est:1500,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b11',item:'Welcome kits (badges, cards, folders)',cat:'Membership',est:5000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b12',item:'Mementos for PDGs & guests',cat:'Event',est:7000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b13',item:'Garlands & bouquets',cat:'Event',est:3000,actual:0,status:'pending',note:'',updated_by:''},
-  {id:'b14',item:'PAN card application fee',cat:'Admin',est:200,actual:200,status:'paid',note:'',updated_by:''},
-  {id:'b15',item:'LCI charter fees ($127 for 3 months)',cat:'International',est:10500,actual:10500,status:'paid',note:'',updated_by:''},
-];
-// ─────────────────────────────────────────────────────────────
-// ██████╗  ██████╗ ███╗   ██╗███████╗██╗ ██████╗
-// ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
-// ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-// ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-// ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-//  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
-// ─────────────────────────────────────────────────────────────
-// ⚠️  CHANGE THESE TWO LINES ONLY — lines 20 and 21
-// ─────────────────────────────────────────────────────────────
-const SUPABASE_URL      = 'https://zurleqcbgnksvpmynire.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1cmxlcWNiZ25rc3ZwbXluaXJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTA3NDIsImV4cCI6MjA5MDE2Njc0Mn0.wZ-r2UoI7DsqkSSpM7YlC2_bghrtKqZ4AOI8Ookbh0E';
-// ─────────────────────────────────────────────────────────────
-const ADMIN_CODE = 'CSKAdmin';
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ══ STATE ══
-let currentUser = '';
-let selectedPrefix = 'Lion';
-let phasesData = [];
-let agendaData = [];
-let chairsData = [];
-let budgetData = [];
-let taskState  = {};  // {taskId: {done,done_by,done_at}}
-let agendaState = {};
-let activeMembers = {};
-let currentFilter = 'all';
-let currentSort = 'default';
-let budgetFilter = 'all';
-let eventDate = null;
-let undoStack = [];
-let currentMainPage = 'installation';
-let currentInstallPage = 'planning';
-
-// ══ INIT ══
-window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('lccsk_user');
-  if (saved) {
-    currentUser = saved;
-    document.getElementById('nameModal').classList.add('hidden');
-    document.getElementById('userTagName').textContent = currentUser;
-    bootApp();
-  } else {
-    document.getElementById('nameModal').classList.remove('hidden');
-    document.getElementById('nameInput').focus();
-  }
-  document.getElementById('nameInput').addEventListener('keydown', e => { if(e.key==='Enter') submitName(); });
-  loadEventDate();
-  showMainPage('installation');
-  document.getElementById('onlineOverlay')?.addEventListener('click', (e) => {
-    if(e.target && e.target.id === 'onlineOverlay') closeOnlineOverlay();
-  });
-});
-
-// ══ NAME / AUTH ══
-function selectPrefix(p) {
-  selectedPrefix = p;
-  ['Lion','Leo','PDG Lion'].forEach(x => {
-    const btn = document.getElementById('pfx'+x.replace(' ',''));
-    if(btn) btn.classList.toggle('active', x===p);
-  });
-}
-// Fix prefix button ids
-document.getElementById('pfxLion').onclick = () => selectPrefix('Lion');
-document.getElementById('pfxLeo').onclick  = () => selectPrefix('Leo');
-document.getElementById('pfxPDG').onclick  = () => selectPrefix('PDG Lion');
-
-async function submitName() {
-  const raw = document.getElementById('nameInput').value.trim();
-  const err = document.getElementById('modalError');
-  err.textContent = '';
-  if (!raw) { err.textContent = 'Please enter your name.'; return; }
-  // Admin shortcut
-  if (raw === ADMIN_CODE) { openAdminLog(); return; }
-  const fullName = selectedPrefix + ' ' + raw;
-  // Check if name already used by someone else on another device
-  const { data } = await db.from('active_members').select('id').eq('id', fullName);
-  const existing = localStorage.getItem('lccsk_user');
-  if (data && data.length > 0 && existing !== fullName) {
-    err.textContent = `"${fullName}" is already active. If this is you, type your exact name again.`;
-    return;
-  }
-  currentUser = fullName;
-  localStorage.setItem('lccsk_user', fullName);
-  document.getElementById('nameModal').classList.add('hidden');
-  document.getElementById('userTagName').textContent = fullName;
-  await logActivity('joined', 'opened the planner');
-  bootApp();
+  // Lazy init pages
+  if(id==='home')     renderHome();
+  if(id==='about')    renderAbout();
+  if(id==='planning' && !PAGE_INIT.planning){ PAGE_INIT.planning=true; initPlanning(); }
+  if(id==='agenda'   && !PAGE_INIT.agenda){  PAGE_INIT.agenda=true;   initAgenda(); }
+  if(id==='chairs'   && !PAGE_INIT.chairs){  PAGE_INIT.chairs=true;   initChairs(); }
+  if(id==='budget'   && !PAGE_INIT.budget){  PAGE_INIT.budget=true;   initBudget(); }
+  if(id==='admin'    && !PAGE_INIT.admin){   PAGE_INIT.admin=true;    initAdmin(); }
 }
 
-function changeNamePrompt() {
-  const n = prompt('Change your name (prefix + name):', currentUser);
-  if (n && n.trim()) {
-    currentUser = n.trim();
-    localStorage.setItem('lccsk_user', currentUser);
-    document.getElementById('userTagName').textContent = currentUser;
-    showToast('Name updated to ' + currentUser);
-  }
+function toggleEventsMenu(e){ e.stopPropagation(); const d=document.getElementById('eventsDropdown'); d.classList.toggle('open'); document.getElementById('onlineDropdown').classList.remove('open'); }
+function closeDropdowns(){ document.querySelectorAll('.dropdown').forEach(d=>d.classList.remove('open')); }
+document.addEventListener('click', closeDropdowns);
+
+// ============= ONLINE PANEL =============
+async function toggleOnlinePanel(e){
+  e.stopPropagation();
+  const d = document.getElementById('onlineDropdown');
+  const btn = document.getElementById('onlineBtn');
+  if(d.classList.contains('open')){ d.classList.remove('open'); return; }
+  // Position near button
+  const rect = btn.getBoundingClientRect();
+  d.style.position='fixed'; d.style.top=(rect.bottom+8)+'px'; d.style.right=(window.innerWidth-rect.right)+'px'; d.style.left='auto';
+  d.classList.add('open');
+  const members = await getOnlineMembers();
+  const list = document.getElementById('online-list');
+  if(!members.length){ list.innerHTML='<div style="padding:10px 14px;font-size:13px;color:var(--text-muted)">No one else online</div>'; return; }
+  list.innerHTML = members.map(m=>`
+    <div class="dropdown-item" style="cursor:default">
+      <div class="online-dot"></div>
+      <div><div style="font-size:13px;font-weight:500">${m.name}</div>
+      <div style="font-size:11px;color:var(--text-muted)">Active ${timeSince(m.last_seen)}</div></div>
+    </div>`).join('');
 }
 
-// ══ BOOT ══
-async function bootApp() {
-  await loadAll();
-  renderAll();
-  subscribeRealtime();
-  trackPresence();
-  setInterval(trackPresence, 30000);
-  startCountdown();
-  showMainPage('installation');
+function timeSince(dateStr){
+  const secs = Math.floor((Date.now()-new Date(dateStr))/1000);
+  if(secs<60) return 'just now';
+  const mins = Math.floor(secs/60);
+  return mins+'m ago';
 }
 
-// ══ LOAD ALL ══
-async function loadAll() {
-  try {
-    const [ph, ag, ch, bu, ts, as_] = await Promise.all([
-      db.from('phases').select('*').order('sort_order'),
-      db.from('agenda').select('*').order('sort_order'),
-      db.from('chairs').select('*').order('sort_order'),
-      db.from('budget').select('*'),
-      db.from('task_state').select('*'),
-      db.from('agenda_state').select('*'),
-    ]);
-    // Seed defaults if empty
-    if (!ph.data || ph.data.length === 0) { await seedPhases(); } else { phasesData = ph.data.map(p => ({...p, tasks: JSON.parse(p.tasks||'[]')})); }
-    if (!ag.data || ag.data.length === 0) { await seedAgenda(); } else { agendaData = ag.data; }
-    if (!ch.data || ch.data.length === 0) { await seedChairs(); } else { chairsData = ch.data.map(c => ({...c, tags: JSON.parse(c.tags||'[]')})); }
-    if (!bu.data || bu.data.length === 0) { await seedBudget(); } else { budgetData = bu.data; }
-    taskState = {}; if(ts.data) ts.data.forEach(r => taskState[r.id] = r);
-    agendaState = {}; if(as_.data) as_.data.forEach(r => agendaState[r.id] = r);
-  } catch(e) { showToast('Connection error. Check your Supabase keys.', 'error'); }
+// ============= DARK MODE =============
+function toggleDarkMode(){
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme', isDark?'':'dark');
+  document.getElementById('darkBtn').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('lccsk_theme', isDark?'light':'dark');
 }
+const savedTheme = localStorage.getItem('lccsk_theme');
+if(savedTheme==='dark'){ document.documentElement.setAttribute('data-theme','dark'); document.getElementById('darkBtn').textContent='☀️'; }
 
-// ══ SEED DEFAULTS ══
-async function seedPhases() {
-  phasesData = DEFAULT_PHASES.map((p,i) => ({...p, sort_order:i, tasks: p.tasks}));
-  for(const p of phasesData) {
-    await db.from('phases').upsert({id:p.id, label:p.label, cls:p.cls, tasks:JSON.stringify(p.tasks), sort_order:p.sort_order},{onConflict:'id'});
-  }
-}
-async function seedAgenda() {
-  agendaData = DEFAULT_AGENDA.map((a,i) => ({...a, sort_order:i}));
-  for(const a of agendaData) await db.from('agenda').upsert({...a},{onConflict:'id'});
-}
-async function seedChairs() {
-  chairsData = DEFAULT_CHAIRS.map((c,i) => ({...c, sort_order:i, tags:c.tags}));
-  for(const c of chairsData) await db.from('chairs').upsert({...c, tags:JSON.stringify(c.tags)},{onConflict:'id'});
-}
-async function seedBudget() {
-  budgetData = [...DEFAULT_BUDGET];
-  for(const b of budgetData) await db.from('budget').upsert({...b},{onConflict:'id'});
-}
-
-// ══ RENDER ALL ══
-function renderAll() {
-  renderPhases();
-  renderAgenda();
-  renderChairs();
+// ============= BUDGET FILTER =============
+function setBudgetFilter(status, btn){
+  budgetSortStatus = status;
+  document.querySelectorAll('.budget-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
   renderBudget();
 }
 
-// ══════════════════════════════════════════════
-// PLANNING
-// ══════════════════════════════════════════════
-function renderPhases() {
-  const c = document.getElementById('phases-container');
-  c.innerHTML = '';
-  let total=0, done=0, urgent=0;
-  phasesData.forEach((ph, pi) => {
-    let tasks = ph.tasks || [];
-    // Filter
-    let filtered = tasks;
-    if (currentFilter !== 'all') {
-      if (currentFilter === 'done') filtered = tasks.filter(t => taskState[t.id]?.done);
-      else if (currentFilter === 'pending') filtered = tasks.filter(t => !taskState[t.id]?.done);
-      else if (currentFilter === 'overdue') filtered = tasks.filter(t => t.deadline && !taskState[t.id]?.done && new Date(t.deadline) < new Date());
-      else filtered = tasks.filter(t => t.priority === currentFilter);
-    }
-    // Sort
-    if (currentSort === 'deadline') filtered = [...filtered].sort((a,b) => (a.deadline||'9999') > (b.deadline||'9999') ? 1 : -1);
-    else if (currentSort === 'priority') { const o={urgent:0,high:1,med:2,low:3}; filtered = [...filtered].sort((a,b)=>(o[a.priority]||9)-(o[b.priority]||9)); }
-    else if (currentSort === 'done') filtered = [...filtered].sort((a,b) => (taskState[a.id]?.done?1:0)-(taskState[b.id]?.done?1:0));
-
-    tasks.forEach(t => { total++; if(taskState[t.id]?.done) done++; if(t.priority==='urgent') urgent++; });
-    const phaseDone = tasks.filter(t=>taskState[t.id]?.done).length;
-    const phasePct = tasks.length ? Math.round(phaseDone/tasks.length*100) : 0;
-
-    const div = document.createElement('div');
-    div.className = 'phase';
-    const taskHTML = filtered.map((t,ti) => buildTaskRow(t, pi, tasks.indexOf(t), tasks.length)).join('');
-    div.innerHTML = `
-      <div class="phase-header ${ph.cls} open" onclick="togglePhase(this)">
-        <h3>${ph.label}</h3>
-        <span class="phase-count">${tasks.length} tasks</span>
-        <span class="phase-pct">${phasePct}%</span>
-        <div class="phase-actions" onclick="event.stopPropagation()">
-          <button class="ph-icon-btn" onclick="editPhaseLabel('${ph.id}')" title="Edit phase name">✏</button>
-          <button class="ph-icon-btn" onclick="deletePhase('${ph.id}')" title="Delete phase">🗑</button>
-        </div>
-        <span class="toggle-icon">▼</span>
-      </div>
-      <div class="phase-body">
-        ${taskHTML}
-        <div class="add-task-row">
-          <input class="add-task-input" type="text" placeholder="+ Add task — press Enter" onkeydown="if(event.key==='Enter')addTask('${ph.id}',this)" />
-        </div>
-      </div>`;
-    c.appendChild(div);
-    if(phasePct===100 && phaseDone===tasks.length && tasks.length>0) launchConfetti();
-  });
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('p-total').textContent = total;
-  document.getElementById('p-done').textContent = done;
-  document.getElementById('p-urgent').textContent = urgent;
-  document.getElementById('p-pct').textContent = pct+'%';
-  document.getElementById('p-bar').style.width = pct+'%';
-  document.getElementById('h-total').textContent = total;
-  document.getElementById('h-done').textContent = done;
-  document.getElementById('h-pct').textContent = pct+'%';
-}
-
-function buildTaskRow(t, pi, ti, totalTasks) {
-  const s = taskState[t.id] || {};
-  const isDone = !!s.done;
-  const today = new Date(); today.setHours(0,0,0,0);
-  let dlClass='', dlText='';
-  if (t.deadline && !isDone) {
-    const dl = new Date(t.deadline);
-    const diff = Math.ceil((dl-today)/(1000*60*60*24));
-    if (diff < 0) { dlClass='dl-over'; dlText=`${Math.abs(diff)}d overdue`; }
-    else if (diff <= 3) { dlClass='dl-warn'; dlText=`${diff}d left`; }
-    else { dlClass='dl-ok'; dlText=`${diff}d left`; }
-  }
-  const pmap = {urgent:'p-urgent',high:'p-high',med:'p-med',low:'p-low'};
-  const plbl = {urgent:'Urgent',high:'High',med:'Medium',low:'Low'};
-  let warnCls = '';
-  if (!isDone && t.deadline) {
-    const dl = new Date(t.deadline); const diff = Math.ceil((dl-today)/(1000*60*60*24));
-    if (diff < 0) warnCls = 'warn-red'; else if (diff <= 3) warnCls = 'warn-amber';
-  }
-  const phaseOpts = phasesData.map(p=>`<option value="${p.id}">${p.label.split('—')[0].trim()}</option>`).join('');
-  return `<div class="task${isDone?' done':''} ${warnCls}" id="task-${t.id}">
-    <div class="checkbox${isDone?' checked':''}" onclick="toggleTask('${t.id}','${pi}')"></div>
-    <div>
-      <div class="task-title" id="ttitle-${t.id}">${t.title}</div>
-      ${t.desc?`<div class="task-desc" id="tdesc-${t.id}">${t.desc}</div>`:''}
-      <div class="task-meta">
-        <span class="task-who">${t.who||''}</span>
-        ${dlText?`<span class="task-deadline ${dlClass}">${dlText}</span>`:''}
-        ${isDone&&s.done_by?`<span class="task-done-by">✓ ${s.done_by}</span>`:''}
-      </div>
-      <div class="task-edit-row" id="tedit-${t.id}" style="display:none">
-        <input type="text" value="${t.title}" id="tinput-${t.id}" style="flex:1;min-width:120px" placeholder="Task title"/>
-        <input type="text" value="${t.desc||''}" id="dinput-${t.id}" style="flex:1;min-width:120px" placeholder="Description"/>
-        <input type="text" value="${t.who||''}" id="winput-${t.id}" style="width:120px" placeholder="Responsible"/>
-        <select id="pinput-${t.id}"><option value="urgent"${t.priority==='urgent'?' selected':''}>Urgent</option><option value="high"${t.priority==='high'?' selected':''}>High</option><option value="med"${t.priority==='med'?' selected':''}>Medium</option><option value="low"${t.priority==='low'?' selected':''}>Low</option></select>
-        <input type="date" value="${t.deadline||''}" id="dlinput-${t.id}" style="width:130px"/>
-        <button class="save-btn" onclick="saveTaskEdit('${t.id}')">Save</button>
-        <button class="del-btn" onclick="deleteTask('${t.id}')">Delete</button>
-      </div>
-      <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
-        <select class="phase-move-select" onchange="moveTaskToPhase('${t.id}',this.value)">${phaseOpts}</select>
-      </div>
-    </div>
-    <div class="task-right">
-      <span class="priority ${pmap[t.priority]||'p-low'}">${plbl[t.priority]||'Low'}</span>
-      <div class="task-move-btns">
-        <button class="move-btn" onclick="moveTaskUp('${t.id}')" title="Move up">↑</button>
-        <button class="move-btn" onclick="moveTaskDown('${t.id}')" title="Move down">↓</button>
-        <button class="move-btn" onclick="toggleTaskEdit('${t.id}')" title="Edit">✏</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function toggleTaskEdit(id) {
-  const el = document.getElementById('tedit-'+id);
-  if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
-}
-
-async function toggleTask(taskId, phaseIdx) {
-  if (!requireUser()) return;
-  const s = taskState[taskId] || {};
-  const nowDone = !s.done;
-  const prev = {...s};
-  taskState[taskId] = {id:taskId, done:nowDone, done_by: nowDone?currentUser:'', done_at: nowDone?new Date().toISOString():null};
-  renderPhases();
-  // Undo
-  const toastId = showUndoToast(nowDone ? 'Task marked done' : 'Task unmarked', async () => {
-    taskState[taskId] = {...prev, id:taskId};
-    renderPhases();
-    await sbUpsert('task_state', {id:taskId, done:!!prev.done, done_by:prev.done_by||'', done_at:prev.done_at||null});
-  });
-  await sbUpsert('task_state', taskState[taskId]);
-  const ph = phasesData[phaseIdx];
-  const task = ph?.tasks?.find(t=>t.id===taskId);
-  await logActivity('task', (nowDone?'completed':'uncompleted')+' task: '+(task?.title||taskId));
-}
-
-async function saveTaskEdit(taskId) {
-  if (!requireUser()) return;
-  const ph = phasesData.find(p => p.tasks.some(t=>t.id===taskId));
-  if (!ph) return;
-  const t = ph.tasks.find(t=>t.id===taskId);
-  t.title    = document.getElementById('tinput-'+taskId)?.value || t.title;
-  t.desc     = document.getElementById('dinput-'+taskId)?.value || '';
-  t.who      = document.getElementById('winput-'+taskId)?.value || '';
-  t.priority = document.getElementById('pinput-'+taskId)?.value || t.priority;
-  t.deadline = document.getElementById('dlinput-'+taskId)?.value || '';
-  await savePhaseTasks(ph);
-  renderPhases();
-  showToast('Task updated', 'success');
-  await logActivity('edit', 'edited task: '+t.title);
-}
-
-async function addTask(phaseId, input) {
-  if (!requireUser()) return;
-  const title = input.value.trim();
-  if (!title) return;
-  const ph = phasesData.find(p=>p.id===phaseId);
-  if (!ph) return;
-  const newTask = {id:'t_'+Date.now(), title, desc:'', who:'', priority:'med', deadline:''};
-  ph.tasks.push(newTask);
-  input.value = '';
-  await savePhaseTasks(ph);
-  renderPhases();
-  showToast('Task added', 'success');
-  await logActivity('task', 'added task: '+title);
-}
-
-async function deleteTask(taskId) {
-  if (!requireUser()) return;
-  if (!confirm('Delete this task?')) return;
-  for (const ph of phasesData) {
-    const idx = ph.tasks.findIndex(t=>t.id===taskId);
-    if (idx >= 0) { ph.tasks.splice(idx,1); await savePhaseTasks(ph); break; }
-  }
-  renderPhases();
-  showToast('Task deleted');
-}
-
-async function moveTaskUp(taskId) {
-  for (const ph of phasesData) {
-    const idx = ph.tasks.findIndex(t=>t.id===taskId);
-    if (idx > 0) { [ph.tasks[idx-1],ph.tasks[idx]] = [ph.tasks[idx],ph.tasks[idx-1]]; await savePhaseTasks(ph); renderPhases(); return; }
-  }
-}
-async function moveTaskDown(taskId) {
-  for (const ph of phasesData) {
-    const idx = ph.tasks.findIndex(t=>t.id===taskId);
-    if (idx >= 0 && idx < ph.tasks.length-1) { [ph.tasks[idx],ph.tasks[idx+1]] = [ph.tasks[idx+1],ph.tasks[idx]]; await savePhaseTasks(ph); renderPhases(); return; }
-  }
-}
-async function moveTaskToPhase(taskId, targetPhaseId) {
-  let task, srcPh;
-  for (const ph of phasesData) {
-    const idx = ph.tasks.findIndex(t=>t.id===taskId);
-    if (idx>=0) { task=ph.tasks[idx]; srcPh=ph; ph.tasks.splice(idx,1); break; }
-  }
-  if (!task) return;
-  const tgt = phasesData.find(p=>p.id===targetPhaseId);
-  if (!tgt || tgt===srcPh) { srcPh.tasks.push(task); return; }
-  tgt.tasks.push(task);
-  await savePhaseTasks(srcPh);
-  await savePhaseTasks(tgt);
-  renderPhases();
-  showToast('Task moved', 'success');
-  await logActivity('move', 'moved task "'+task.title+'" to '+tgt.label.split('—')[0]);
-}
-
-async function addPhasePrompt() {
-  const label = prompt('Enter phase name:');
-  if (!label) return;
-  const newPh = {id:'ph_'+Date.now(), label, cls:'ph-0', tasks:[], sort_order:phasesData.length};
-  phasesData.push(newPh);
-  await db.from('phases').upsert({id:newPh.id,label:newPh.label,cls:newPh.cls,tasks:'[]',sort_order:newPh.sort_order},{onConflict:'id'});
-  renderPhases();
-  showToast('Phase added', 'success');
-}
-async function editPhaseLabel(phId) {
-  const ph = phasesData.find(p=>p.id===phId); if(!ph) return;
-  const label = prompt('Edit phase name:', ph.label); if(!label) return;
-  ph.label = label;
-  await db.from('phases').update({label}).eq('id',phId);
-  renderPhases();
-}
-async function deletePhase(phId) {
-  if (!confirm('Delete this entire phase and all its tasks?')) return;
-  phasesData = phasesData.filter(p=>p.id!==phId);
-  await db.from('phases').delete().eq('id',phId);
-  renderPhases();
-  showToast('Phase deleted');
-}
-async function savePhaseTasks(ph) {
-  await db.from('phases').update({tasks:JSON.stringify(ph.tasks)}).eq('id',ph.id);
-}
-
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-bar .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderPhases();
-}
-function setSort(v) { currentSort=v; renderPhases(); }
-
-// ══════════════════════════════════════════════
-// AGENDA
-// ══════════════════════════════════════════════
-function renderAgenda() {
-  const c = document.getElementById('agenda-container'); c.innerHTML='';
-  const typeMap = {protocol:'at-protocol',ceremony:'at-ceremony',speech:'at-speech',service:'at-service',felicitation:'at-felicitation'};
-  agendaData.forEach((item,i) => {
-    const s = agendaState[item.id] || {};
-    const isDone = !!s.done;
-    const div = document.createElement('div');
-    div.className = `agenda-item${isDone?' done':''}`;
-    div.innerHTML = `
-      <div>
-        <div class="agenda-num${isDone?' done-num':''}">${i+1}</div>
-      </div>
-      <div>
-        <div class="agenda-title" id="atitle-${item.id}">${item.title}</div>
-        <div class="agenda-detail" id="adetail-${item.id}">${item.detail||''}</div>
-        <span class="agenda-type ${typeMap[item.type]||''}">${item.type||''}</span>
-        ${isDone&&s.done_by?`<div class="agenda-done-by">✓ Done by ${s.done_by}</div>`:''}
-        <div class="agenda-edit-row" id="aedit-${item.id}" style="display:none">
-          <input type="text" value="${item.title}" id="atin-${item.id}" style="flex:1;min-width:120px" placeholder="Title"/>
-          <input type="text" value="${item.detail||''}" id="adin-${item.id}" style="flex:1;min-width:120px" placeholder="Detail"/>
-          <input type="time" value="${timeToInput(item.time)}" id="atim-${item.id}" style="width:100px"/>
-          <input type="number" value="${item.duration||5}" id="adur-${item.id}" style="width:60px" placeholder="mins"/>
-          <select id="atyp-${item.id}">
-            ${['protocol','ceremony','speech','service','felicitation'].map(t=>`<option value="${t}"${item.type===t?' selected':''}>${t}</option>`).join('')}
-          </select>
-          <button class="save-btn" onclick="saveAgendaEdit('${item.id}')">Save</button>
-          <button class="del-btn" onclick="deleteAgendaItem('${item.id}')">Delete</button>
-        </div>
-      </div>
-      <div class="agenda-right">
-        <div class="time-badge">${item.time||''}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${item.duration||0} min</div>
-        <div class="agenda-move-btns">
-          <button class="move-btn" onclick="moveAgendaUp('${item.id}')">↑</button>
-          <button class="move-btn" onclick="moveAgendaDown('${item.id}')">↓</button>
-          <button class="move-btn" onclick="toggleAgendaEdit('${item.id}')">✏</button>
-          <button class="move-btn" onclick="toggleAgendaDone('${item.id}')">✓</button>
-        </div>
-      </div>`;
-    c.appendChild(div);
-  });
-  updateDurationTotal();
-}
-
-function toggleAgendaEdit(id) {
-  const el=document.getElementById('aedit-'+id);
-  if(el) el.style.display=el.style.display==='none'?'flex':'none';
-}
-async function toggleAgendaDone(id) {
-  if(!requireUser()) return;
-  const s = agendaState[id]||{};
-  const nowDone = !s.done;
-  agendaState[id] = {id,done:nowDone,done_by:nowDone?currentUser:'',done_at:nowDone?new Date().toISOString():null};
-  renderAgenda();
-  await sbUpsert('agenda_state',agendaState[id]);
-  const item = agendaData.find(a=>a.id===id);
-  await logActivity('agenda',(nowDone?'completed':'uncompleted')+' agenda: '+(item?.title||id));
-}
-async function saveAgendaEdit(id) {
-  if(!requireUser()) return;
-  const item = agendaData.find(a=>a.id===id); if(!item) return;
-  item.title    = document.getElementById('atin-'+id)?.value||item.title;
-  item.detail   = document.getElementById('adin-'+id)?.value||'';
-  item.time     = inputToTime(document.getElementById('atim-'+id)?.value||'');
-  item.duration = parseInt(document.getElementById('adur-'+id)?.value)||item.duration;
-  item.type     = document.getElementById('atyp-'+id)?.value||item.type;
-  await db.from('agenda').update({title:item.title,detail:item.detail,time:item.time,duration:item.duration,type:item.type}).eq('id',id);
-  renderAgenda();
-  showToast('Agenda item updated','success');
-}
-async function addAgendaItem() {
-  const newItem = {id:'a_'+Date.now(),title:'New Agenda Item',detail:'',time:'7:00 PM',duration:5,type:'protocol',sort_order:agendaData.length};
-  agendaData.push(newItem);
-  await db.from('agenda').upsert({...newItem},{onConflict:'id'});
-  renderAgenda();
-  showToast('Agenda item added','success');
-}
-async function deleteAgendaItem(id) {
-  if(!confirm('Delete this agenda item?')) return;
-  agendaData=agendaData.filter(a=>a.id!==id);
-  await db.from('agenda').delete().eq('id',id);
-  renderAgenda();
-}
-async function moveAgendaUp(id) {
-  const i=agendaData.findIndex(a=>a.id===id);
-  if(i>0){ [agendaData[i-1],agendaData[i]]=[agendaData[i],agendaData[i-1]]; await reorderAgenda(); renderAgenda(); }
-}
-async function moveAgendaDown(id) {
-  const i=agendaData.findIndex(a=>a.id===id);
-  if(i<agendaData.length-1){ [agendaData[i],agendaData[i+1]]=[agendaData[i+1],agendaData[i]]; await reorderAgenda(); renderAgenda(); }
-}
-async function reorderAgenda() {
-  for(let i=0;i<agendaData.length;i++) await db.from('agenda').update({sort_order:i}).eq('id',agendaData[i].id);
-}
-function updateDurationTotal() {
-  const total = agendaData.reduce((s,a)=>s+(parseInt(a.duration)||0),0);
-  const hrs = Math.floor(total/60), mins = total%60;
-  document.getElementById('duration-text').textContent = agendaData.map(a=>`${a.title.slice(0,20)} — ${a.duration||0} min`).join(' | ').slice(0,200)+'… | Total: '+(hrs?hrs+'h ':'')+mins+'min';
-}
-function timeToInput(t) { if(!t) return '17:00'; const m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i); if(!m) return '17:00'; let h=parseInt(m[1]),mn=parseInt(m[2]); if(m[3]&&m[3].toUpperCase()==='PM'&&h<12) h+=12; if(m[3]&&m[3].toUpperCase()==='AM'&&h===12) h=0; return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`; }
-function inputToTime(v) { if(!v) return '5:00 PM'; const [h,m]=v.split(':').map(Number); const ampm=h>=12?'PM':'AM'; const h12=h%12||12; return `${h12}:${String(m).padStart(2,'0')} ${ampm}`; }
-
-// ══════════════════════════════════════════════
-// CHAIRPERSONS
-// ══════════════════════════════════════════════
-function renderChairs() {
-  const c=document.getElementById('chair-grid'); c.innerHTML='';
-  chairsData.forEach((ch,ci)=>{
-    const tags = Array.isArray(ch.tags)?ch.tags:(JSON.parse(ch.tags||'[]'));
-    const chipsHTML = tags.map((t,ti)=>`<span class="chip" style="background:${ch.tagBg||'#eee'};color:${ch.tagColor||'#333'}">${t}<span class="chip-del" onclick="removeChairTag('${ch.id}',${ti})">✕</span></span>`).join('');
-    const card=document.createElement('div'); card.className='chair-card';
-    card.innerHTML=`
-      <div class="chair-card-head" style="background:${ch.bg||'#f5f5f5'}">
-        <div class="chair-icon-wrap" style="background:${ch.iconBg||'#333'};color:#fff">${ch.icon||'👤'}</div>
-        <div style="flex:1">
-          <div class="chair-name" id="cname-${ch.id}">${ch.name}</div>
-          <div class="chair-lci" id="clci-${ch.id}">${ch.lci||''}</div>
-        </div>
-        <button class="move-btn" onclick="toggleChairEdit('${ch.id}')" style="flex-shrink:0">✏</button>
-      </div>
-      <div class="chair-body">
-        <div class="chair-projects" id="ctags-${ch.id}">${chipsHTML}
-          <input class="chip-add-input" type="text" placeholder="+ tag" onkeydown="if(event.key==='Enter')addChairTag('${ch.id}',this)"/>
-        </div>
-        <div class="chair-duties" id="cduties-${ch.id}">${ch.duties||''}</div>
-        <div class="chair-edit-area" id="cedit-${ch.id}" style="display:none">
-          <input type="text" value="${ch.name}" id="cnin-${ch.id}" placeholder="Chairperson name"/>
-          <input type="text" value="${ch.lci||''}" id="clciin-${ch.id}" placeholder="LCI cause / programme"/>
-          <textarea id="cdutyin-${ch.id}" placeholder="Duties description">${ch.duties||''}</textarea>
-          <button class="save-btn" onclick="saveChairEdit('${ch.id}')">Save</button>
-          <button class="del-btn" onclick="deleteChair('${ch.id}')">Delete</button>
-        </div>
-        <div class="chair-assign">
-          <span class="assign-label">Assigned to:</span>
-          <input class="assign-input" type="text" value="${ch.assigned_to||''}" placeholder="Enter Lion's name…" onchange="assignChair('${ch.id}',this.value)"/>
-        </div>
-        ${ch.assigned_by?`<div class="assigned-by">Updated by ${ch.assigned_by}</div>`:''}
-      </div>`;
-    c.appendChild(card);
-  });
-}
-function toggleChairEdit(id){const el=document.getElementById('cedit-'+id);if(el)el.style.display=el.style.display==='none'?'flex':'none';}
-async function saveChairEdit(id){
-  if(!requireUser()) return;
-  const ch=chairsData.find(c=>c.id===id);if(!ch) return;
-  ch.name=document.getElementById('cnin-'+id)?.value||ch.name;
-  ch.lci=document.getElementById('clciin-'+id)?.value||'';
-  ch.duties=document.getElementById('cdutyin-'+id)?.value||'';
-  await db.from('chairs').update({name:ch.name,lci:ch.lci,duties:ch.duties}).eq('id',id);
-  renderChairs(); showToast('Chairperson updated','success');
-}
-async function assignChair(id,val){
-  if(!requireUser()) return;
-  const ch=chairsData.find(c=>c.id===id);if(!ch)return;
-  ch.assigned_to=val;ch.assigned_by=currentUser;
-  await db.from('chairs').update({assigned_to:val,assigned_by:currentUser}).eq('id',id);
-  showToast('Assignment saved','success');
-  await logActivity('chairperson','assigned "'+val+'" as '+ch.name);
-}
-async function addChairTag(id,input){
-  const val=input.value.trim();if(!val)return;
-  const ch=chairsData.find(c=>c.id===id);if(!ch)return;
-  const tags=Array.isArray(ch.tags)?ch.tags:JSON.parse(ch.tags||'[]');
-  tags.push(val);ch.tags=tags;input.value='';
-  await db.from('chairs').update({tags:JSON.stringify(tags)}).eq('id',id);
-  renderChairs();
-}
-async function removeChairTag(id,ti){
-  const ch=chairsData.find(c=>c.id===id);if(!ch)return;
-  const tags=Array.isArray(ch.tags)?ch.tags:JSON.parse(ch.tags||'[]');
-  tags.splice(ti,1);ch.tags=tags;
-  await db.from('chairs').update({tags:JSON.stringify(tags)}).eq('id',id);
-  renderChairs();
-}
-async function addChairperson(){
-  const name=prompt('Chairperson role name:');if(!name)return;
-  const newCh={id:'c_'+Date.now(),name,lci:'',icon:'⭐',bg:'#F7F5F0',iconBg:'#0B1A3B',tags:[],tagColor:'#0B1A3B',tagBg:'#E8F0FF',duties:'',assigned_to:'',assigned_by:'',sort_order:chairsData.length};
-  chairsData.push(newCh);
-  await db.from('chairs').upsert({...newCh,tags:'[]'},{onConflict:'id'});
-  renderChairs();showToast('Chairperson added','success');
-}
-async function deleteChair(id){
-  if(!confirm('Delete this chairperson role?'))return;
-  chairsData=chairsData.filter(c=>c.id!==id);
-  await db.from('chairs').delete().eq('id',id);
-  renderChairs();showToast('Deleted');
-}
-
-// ══════════════════════════════════════════════
-// BUDGET
-// ══════════════════════════════════════════════
-function renderBudget(){
-  const tbody=document.getElementById('budget-rows');tbody.innerHTML='';
-  let rows=[...budgetData];
-  if(budgetFilter!=='all') rows=rows.filter(r=>r.status===budgetFilter);
-  rows.forEach(row=>{
-    const tr=document.createElement('div');tr.className='btrow';
-    const opts=['pending','paid','na'].map(s=>`<option value="${s}"${row.status===s?' selected':''}>${s==='na'?'N/A':s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('');
-    const sClass=row.status==='paid'?'status-paid':row.status==='pending'?'status-pending':'status-na';
-    tr.innerHTML=`
-      <div>
-        <input type="text" value="${row.item||''}" style="font-weight:500;border:none;background:transparent;width:100%;padding:0;font-size:13px;color:var(--text)" onchange="updateBudget('${row.id}','item',this.value)" placeholder="Expense item name"/>
-        <span class="btcat">${row.cat||'Event'}</span>
-        ${row.updated_by?`<div class="updated-by">by ${row.updated_by}</div>`:''}
-        <div class="note-field${row._noteOpen?' visible':''}" id="note-${row.id}">
-          <textarea rows="2" placeholder="Add a note…" onchange="updateBudget('${row.id}','note',this.value)">${row.note||''}</textarea>
-        </div>
-      </div>
-      <span><input type="number" value="${row.est||0}" onchange="updateBudget('${row.id}','est',this.value)"/></span>
-      <span><input type="number" value="${row.actual||0}" onchange="updateBudget('${row.id}','actual',this.value)"/></span>
-      <span>
-        <select onchange="updateBudget('${row.id}','status',this.value)" class="${sClass}">${opts}</select>
-      </span>
-      <span>
-        <button class="note-btn" onclick="toggleNote('${row.id}')" title="Toggle note">📝</button>
-      </span>`;
-    tbody.appendChild(tr);
-  });
-  calcBudget();
-}
-function toggleNote(id){
-  const row=budgetData.find(r=>r.id===id);if(!row)return;
-  row._noteOpen=!row._noteOpen;
-  const el=document.getElementById('note-'+id);
-  if(el)el.classList.toggle('visible',row._noteOpen);
-}
-async function updateBudget(id,field,val){
-  if(!requireUser())return;
-  const row=budgetData.find(r=>r.id===id);if(!row)return;
-  row[field]=field==='est'||field==='actual'?parseFloat(val)||0:val;
-  row.updated_by=currentUser;row.updated_at=new Date().toISOString();
-  calcBudget();
-  const {note:n,...rowClean}=row;delete rowClean._noteOpen;
-  await sbUpsert('budget',{...rowClean,note:row.note||''});
-  await logActivity('budget','updated "'+row.item+'" ('+field+')');
-}
-async function addBudgetRow(){
-  if(!requireUser())return;
-  const id='b_'+Date.now();
-  const row={id,item:'New expense',cat:'Event',est:0,actual:0,status:'pending',note:'',updated_by:currentUser,updated_at:new Date().toISOString()};
-  budgetData.push(row);
-  await sbUpsert('budget',row);renderBudget();
-  showToast('Row added','success');
-}
-function calcBudget(){
-  let total=0,paid=0,pending=0;
-  budgetData.forEach(r=>{const e=parseFloat(r.est)||0,a=parseFloat(r.actual)||0;total+=e;if(r.status==='paid')paid+=a||e;else if(r.status==='pending')pending+=e;});
-  document.getElementById('b-total').textContent='₹'+total.toLocaleString('en-IN');
-  document.getElementById('b-paid').textContent='₹'+paid.toLocaleString('en-IN');
-  document.getElementById('b-pending').textContent='₹'+pending.toLocaleString('en-IN');
-}
-function setBudgetSort(f,btn){
-  budgetFilter=f;
-  document.querySelectorAll('.budget-sort .filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');renderBudget();
-}
-function exportBudgetPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(16);doc.text('Lions Club of Chennai Super Kings',105,18,{align:'center'});
-  doc.setFontSize(11);doc.setFont('helvetica','normal');
-  doc.text('Club No. 192069 | District 3241 E | Budget Report',105,26,{align:'center'});
-  doc.text('Generated: '+new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}),105,33,{align:'center'});
-  let total=0,paid=0,pending=0;
-  budgetData.forEach(r=>{const e=parseFloat(r.est)||0,a=parseFloat(r.actual)||0;total+=e;if(r.status==='paid')paid+=a||e;else if(r.status==='pending')pending+=e;});
-  doc.setFont('helvetica','bold');doc.setFontSize(11);
-  doc.text(`Total Estimated: Rs.${total.toLocaleString('en-IN')}   Paid: Rs.${paid.toLocaleString('en-IN')}   Pending: Rs.${pending.toLocaleString('en-IN')}`,14,44);
-  doc.autoTable({
-    startY:50,
-    head:[['#','Item','Category','Estimated (Rs.)','Actual (Rs.)','Status','Note']],
-    body:budgetData.map((r,i)=>[i+1,r.item,r.cat,r.est,r.actual,r.status,r.note||'']),
-    styles:{fontSize:9},headStyles:{fillColor:[11,26,59],textColor:255},
-    alternateRowStyles:{fillColor:[247,245,240]},
-  });
-  const finalY=doc.lastAutoTable.finalY+20;
-  doc.setFontSize(10);doc.setFont('helvetica','normal');
-  doc.text('Treasurer Signature: ________________________',14,finalY);
-  doc.text('Date: ________________',14,finalY+10);
-  doc.text('President Signature: ________________________',110,finalY);
-  doc.save('LC_CSK_Budget_Report.pdf');
-  showToast('PDF exported','success');
-}
-
-// ══════════════════════════════════════════════
-// REALTIME
-// ══════════════════════════════════════════════
-function subscribeRealtime(){
-  db.channel('lccsk-live')
-    .on('postgres_changes',{event:'*',schema:'public',table:'phases'},async()=>{ await loadAll(); renderPhases(); })
-    .on('postgres_changes',{event:'*',schema:'public',table:'task_state'},payload=>{ if(payload.new){taskState[payload.new.id]=payload.new;renderPhases();} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'agenda'},async()=>{ const {data}=await db.from('agenda').select('*').order('sort_order'); if(data)agendaData=data; renderAgenda(); })
-    .on('postgres_changes',{event:'*',schema:'public',table:'agenda_state'},payload=>{ if(payload.new){agendaState[payload.new.id]=payload.new;renderAgenda();} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'chairs'},async()=>{ const {data}=await db.from('chairs').select('*').order('sort_order'); if(data)chairsData=data.map(c=>({...c,tags:JSON.parse(c.tags||'[]')})); renderChairs(); })
-    .on('postgres_changes',{event:'*',schema:'public',table:'budget'},payload=>{ if(payload.new){const idx=budgetData.findIndex(r=>r.id===payload.new.id);if(idx>=0)budgetData[idx]={...budgetData[idx],...payload.new};else budgetData.push(payload.new);renderBudget();} })
-    .on('postgres_changes',{event:'*',schema:'public',table:'active_members'},async()=>{ const members = await getMembers(); renderPresence(members); document.getElementById('h-members').textContent = members.length; if(document.getElementById('onlineOverlay')?.classList.contains('visible')) renderOnlineMembers(); })
-    .subscribe();
-}
-
-// ══════════════════════════════════════════════
-// PRESENCE
-// ══════════════════════════════════════════════
-async function getMembers(){
-  const cutoff=new Date(Date.now()-90000).toISOString();
-  const {data}=await db.from('active_members').select('*').gt('last_seen',cutoff);
-  return data||[];
-}
-async function trackPresence(){
-  if(!currentUser)return;
-  await sbUpsert('active_members',{id:currentUser,last_seen:new Date().toISOString()});
-  const members=await getMembers();
-  renderPresence(members);
-  document.getElementById('h-members').textContent=members.length;
-  if(document.getElementById('onlineOverlay')?.classList.contains('visible')) renderOnlineMembers();
-}
-function renderPresence(members){
-  const c=document.getElementById('presenceNames');c.innerHTML='';
-  members.forEach(m=>{
-    const span=document.createElement('span');span.className='presence-name';
-    span.innerHTML=`<span class="presence-dot"></span>${m.id}`;
-    c.appendChild(span);
+// ============= REALTIME CALLBACKS =============
+function setupRealtime(){
+  subscribeAll({
+    tasks: p => { if(p.new){ const i=tasksState.findIndex(t=>t.id===p.new.id); if(i>=0) tasksState[i]=p.new; else tasksState.push(p.new); if(PAGE_INIT.planning) { renderPhases(); updatePlanningStats(); } }},
+    agenda: p => { if(p.new){ const i=agendaState.findIndex(a=>a.id===p.new.id); if(i>=0) agendaState[i]=p.new; else agendaState.push(p.new); if(PAGE_INIT.agenda) renderAgenda(); }},
+    chairs: p => { if(p.new){ const i=chairsState.findIndex(c=>c.id===p.new.id); if(i>=0) chairsState[i]=p.new; else chairsState.push(p.new); if(PAGE_INIT.chairs) renderChairs(); }},
+    budget: p => { if(p.new){ const i=budgetState.findIndex(r=>r.id===p.new.id); if(i>=0) budgetState[i]=p.new; else budgetState.push(p.new); if(PAGE_INIT.budget) renderBudget(); }},
+    settings: p => { if(p.new?.key==='event_date') updateCountdown(); },
   });
 }
 
-// ══════════════════════════════════════════════
-// COUNTDOWN
-// ══════════════════════════════════════════════
-function loadEventDate(){
-  const saved=localStorage.getItem('lccsk_event_date');
-  if(saved){eventDate=new Date(saved);document.getElementById('countdownBanner').classList.remove('hidden');startCountdown();}
-}
-function promptSetDate(){
-  const d=prompt('Enter Installation Date (YYYY-MM-DD):',eventDate?eventDate.toISOString().split('T')[0]:'');
-  if(!d)return;
-  eventDate=new Date(d+'T18:00:00');
-  localStorage.setItem('lccsk_event_date',eventDate.toISOString());
-  document.getElementById('countdownBanner').classList.remove('hidden');
-  startCountdown();
-}
-function startCountdown(){
-  if(!eventDate)return;
-  function tick(){
-    if(!eventDate)return;
-    const now=new Date(),diff=eventDate-now;
-    if(diff<=0){document.getElementById('cdDays').textContent='0';document.getElementById('cdHours').textContent='00';document.getElementById('cdMins').textContent='00';return;}
-    const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000);
-    document.getElementById('cdDays').textContent=d;
-    document.getElementById('cdHours').textContent=String(h).padStart(2,'0');
-    document.getElementById('cdMins').textContent=String(m).padStart(2,'0');
-  }
-  tick();setInterval(tick,30000);
+// ============= HEARTBEAT ─ keep online status ─ =============
+let heartbeatInterval;
+function startHeartbeat(){
+  if(!SESSION) return;
+  heartbeat(SESSION.lion_id, SESSION.name);
+  heartbeatInterval = setInterval(()=>heartbeat(SESSION.lion_id, SESSION.name), 90000); // every 90s
 }
 
-// ══════════════════════════════════════════════
-// DARK MODE
-// ══════════════════════════════════════════════
-function toggleDark(){
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  document.documentElement.setAttribute('data-theme',isDark?'light':'dark');
-  localStorage.setItem('lccsk_theme',isDark?'light':'dark');
-}
-(function(){const t=localStorage.getItem('lccsk_theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
-
-// ══════════════════════════════════════════════
-// CONFETTI
-// ══════════════════════════════════════════════
-let lastConfetti={};
-function launchConfetti(){
-  const now=Date.now();
-  // Only once per render cycle
-  if(lastConfetti._t && now-lastConfetti._t<5000)return;
-  lastConfetti._t=now;
-  const wrap=document.getElementById('confettiWrap');wrap.innerHTML='';
-  const colors=['#C9A84C','#0D7C6B','#1A2F5A','#B83A2A','#F0D98A','#2A6B3A'];
-  for(let i=0;i<60;i++){
-    const el=document.createElement('div');el.className='confetti-piece';
-    el.style.cssText=`left:${Math.random()*100}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.8}s;border-radius:${Math.random()>0.5?'50%':'2px'}`;
-    wrap.appendChild(el);
-  }
-  setTimeout(()=>wrap.innerHTML='',4000);
-  showToast('🎉 Phase complete!','success');
-}
-
-// ══════════════════════════════════════════════
-// ADMIN LOG
-// ══════════════════════════════════════════════
-async function openAdminLog(){
-  document.getElementById('nameModal').classList.add('hidden');
-  document.getElementById('adminOverlay').classList.remove('hidden');
-  const {data}=await db.from('activity_log').select('*').order('created_at',{ascending:false}).limit(100);
-  const body=document.getElementById('adminLogBody');
-  if(!data||data.length===0){body.innerHTML='<div class="log-empty">No activity yet.</div>';return;}
-  body.innerHTML=data.map(item=>{
-    const name=(item.lion_name||'NA');
-    const initials=name.split(' ').filter(Boolean).map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'NA';
-    const time=new Date(item.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-    return `<div class="log-item"><div class="log-avatar">${initials}</div><div><span class="log-name">${name}</span> ${item.description||''}<div class="log-time">${time}</div></div></div>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-function requireUser(){if(!currentUser){showToast('Please enter your name first','error');return false;}return true;}
-
-async function sbUpsert(table,row){
-  const {error}=await db.from(table).upsert(row,{onConflict:'id'});
-  if(error){showToast('Sync error: '+error.message,'error');console.error(error);}
-}
-
-async function logActivity(type,description){
-  if(!currentUser)return;
-  await db.from('activity_log').insert({lion_name:currentUser,action_type:type,description,created_at:new Date().toISOString()});
-}
-
-function showToast(msg,type=''){
-  const c=document.getElementById('toastContainer');
-  const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;
-  c.appendChild(t);setTimeout(()=>t.remove(),3000);
-}
-
-function showUndoToast(msg,undoFn){
-  const c=document.getElementById('toastContainer');
-  const t=document.createElement('div');t.className='toast';
-  t.innerHTML=`${msg} <button class="toast-undo" onclick="this.parentElement._undone=true;this.parentElement.remove();undoFn_()">Undo</button>`;
-  window.undoFn_=undoFn;
-  c.appendChild(t);
-  setTimeout(()=>{if(!t._undone)t.remove();},5000);
-}
-
-function showMainPage(id){
-  currentMainPage = id;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.install-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('installTabs')?.classList.toggle('visible', id==='installation');
-  const btn = document.querySelector(`.main-tab[data-page="${id}"]`);
-  if(btn) btn.classList.add('active');
-  if(id === 'installation'){
-    showInstallPage(currentInstallPage || 'planning', false);
-  } else {
-    const page = document.getElementById('page-' + id);
-    if(page) page.classList.add('active');
+// ============= BOOT =============
+async function boot(){
+  const loggedIn = await initAuth();
+  if(loggedIn){
+    document.getElementById('loginModal').classList.add('hidden');
+    renderHome();
+    updateCountdown();
+    setupRealtime();
+    startHeartbeat();
   }
 }
 
-function showInstallPage(id, updateMain=true){
-  currentInstallPage = id;
-  if(updateMain) currentMainPage = 'installation';
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.install-tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('installTabs')?.classList.add('visible');
-  document.querySelector('.main-tab[data-page="installation"]')?.classList.add('active');
-  const btn = document.querySelector(`.install-tab[data-page="${id}"]`);
-  if(btn) btn.classList.add('active');
-  const page = document.getElementById('page-' + id);
-  if(page) page.classList.add('active');
-}
-
-function openOnlineOverlay(){
-  renderOnlineMembers();
-  document.getElementById('onlineOverlay')?.classList.add('visible');
-  document.getElementById('onlineOverlay')?.setAttribute('aria-hidden','false');
-}
-
-function closeOnlineOverlay(){
-  document.getElementById('onlineOverlay')?.classList.remove('visible');
-  document.getElementById('onlineOverlay')?.setAttribute('aria-hidden','true');
-}
-
-async function renderOnlineMembers(){
-  const c = document.getElementById('onlineMembersList');
-  if(!c) return;
-  const members = await getMembers();
-  document.getElementById('h-members').textContent = members.length;
-  if(!members.length){
-    c.innerHTML = '<div class="online-empty">No one is online right now.</div>';
-    return;
-  }
-  c.innerHTML = members.map(m => {
-    const name = m.id || 'Unknown';
-    const seen = m.last_seen ? new Date(m.last_seen).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}) : 'Now';
-    return `<div class="online-item"><div><div class="name">${name}</div><div class="meta">Seen ${seen}</div></div><div class="presence-dot"></div></div>`;
-  }).join('');
-}
-
-function togglePhase(header){
-  header.classList.toggle('open');
-  header.nextElementSibling.classList.toggle('collapsed');
-}
+boot();
 </script>
 </body>
 </html>
