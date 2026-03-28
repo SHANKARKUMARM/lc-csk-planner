@@ -71,24 +71,21 @@ async function dbInsert(table, row) {
 
 
 // ── MEMBERS ──────────────────────────────────────────────────
-async function getMemberById(lionId) {
-  try {
-    const { data, error } = await DB
-      .from('members')
-      .select('*')
-      .eq('lion_id', lionId)
-      .maybeSingle(); // safer than .single()
+async function getMemberById(lionId){
+  alert("Checking ID: " + lionId);
 
-    if (error) {
-      console.error("Member fetch error:", error.message);
-      return null;
-    }
+  const { data, error } = await DB
+    .from('members')
+    .select('*');
 
-    return data;
-  } catch (e) {
-    console.error("Unexpected error:", e.message);
+  alert("Data from DB: " + JSON.stringify(data));
+
+  if(error){
+    alert("Error: " + error.message);
     return null;
   }
+
+  return data.find(m => m.lion_id === lionId) || null;
 }
 
 async function seedMembersIfEmpty() {
