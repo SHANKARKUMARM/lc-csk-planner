@@ -23,11 +23,15 @@ function toast(msg, type = 'success') {
 async function dbGet(table, order = 'id') {
   try {
     const { data, error } = await DB.from(table).select('*').order(order);
-    if (error) throw error;
+
+    if (error) {
+      console.warn(`DB warning [${table}]:`, error.message);
+      return [];
+    }
+
     return data || [];
   } catch (e) {
-    console.error(`DB read error [${table}]:`, e.message);
-    toast(`Could not load ${table}. Check connection.`, 'error');
+    console.warn(`DB catch [${table}]:`, e.message);
     return [];
   }
 }
