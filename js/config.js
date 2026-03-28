@@ -7,7 +7,7 @@
 // ============================================================
 
 const SUPABASE_URL  = 'https://zurleqcbgnksvpmynire.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1cmxlcWNiZ25rc3ZwbXluaXJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTA3NDIsImV4cCI6MjA5MDE2Njc0Mn0.wZ-r2UoI7DsqkSSpM7YlC2_bghrtKqZ4AOI8Ookbh0E';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1cmxlcWNiZ25rc3ZwbXluaXJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTA3NDIsImV4cCI6MjA5MDE2Njc0Mn0.wZ-r2UoI7DsqkSSpM7YlC2_bghrtKqZ4AOI8Ookbh0E';
 
 // Admin secret — change this if you want a different admin password
 const ADMIN_CODE = 'CSKAdmin';
