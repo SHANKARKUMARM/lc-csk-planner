@@ -77,18 +77,19 @@ async function dbInsert(table, row) {
 // ── MEMBERS ──────────────────────────────────────────────────
 async function getMemberById(lionId) {
   try {
+    const cleanId = String(lionId).trim();
+
     const { data, error } = await DB
       .from('members')
-      .select('*')
-      .eq('lion_id', String(lionId))
-      .maybeSingle();
+      .select('*');
 
     if (error) {
       console.error("Member fetch error:", error.message);
       return null;
     }
 
-    return data;
+    return data.find(m => String(m.lion_id).trim() === cleanId) || null;
+
   } catch (e) {
     console.error("Unexpected error:", e.message);
     return null;
